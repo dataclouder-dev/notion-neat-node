@@ -3,6 +3,13 @@ import { Client } from '@notionhq/client';
 import { ExportResults, MediumStory } from './notion.types';
 import { BlockObjectResponse } from '@notionhq/client/build/src/api-endpoints';
 
+type NotionPageContent = {
+  success: boolean;
+  page: any;
+  error?: string;
+  title?: string;
+  blocks?: BlockObjectResponse[];
+};
 @Injectable()
 export class NotionService {
   private notion: Client;
@@ -50,7 +57,7 @@ export class NotionService {
     }
   }
 
-  async getNotionPage(pageId: string) {
+  async getNotionPageBlocks(pageId: string) {
     try {
       const pageResponse = await this.notion.pages.retrieve({
         page_id: pageId,
@@ -64,7 +71,7 @@ export class NotionService {
         success: true,
         page: {
           ...pageResponse,
-          content: blocksResponse.results,
+          blocks: blocksResponse.results,
         },
       };
     } catch (error) {
@@ -77,7 +84,7 @@ export class NotionService {
     }
   }
 
-  async getNotionPageContent(pageId: string) {
+  async getNotionPageBlocksFormatted(pageId: string): Promise<NotionPageContent> {
     try {
       const pageResponse = await this.notion.pages.retrieve({
         page_id: pageId,

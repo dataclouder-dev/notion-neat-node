@@ -93,6 +93,10 @@ Our recommended architecture leverages Google Cloud components for a zero-cost, 
 
 Consider checking out [notion-render](https://github.com/kerwanp/notion-render) for alternative approaches.
 
+### Deploy 🌤️ 🚀
+
+make gcp-enable-services # will ask to enable bill on GCP this is required to deploy make build-push # make deploy-service
+
 ### 📚 Documentation
 
 Those are ideas for my technical solution, not implemented yet, and not sure if will work at all, leave a star and follow for udpates.

@@ -1,10 +1,11 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { NotionService } from './notion.service';
 import { ExportResults } from './notion.types';
 import { NotionDBService } from './notion-db.service';
 import { DatabaseObjectResponse } from '@notionhq/client/build/src/api-endpoints';
 import { extractPagePlainText, renderPageContentToHtml, renderPageContentToMarkdown } from './notion.transforms';
 import { ApiQuery } from '@nestjs/swagger';
+import { NotionWritesService } from './notion-writes.service';
 
 enum ExportType {
   HTML = 'html',
@@ -17,37 +18,28 @@ enum ExportType {
 export class NotionController {
   constructor(
     private readonly notionService: NotionService,
-    private readonly notionDBService: NotionDBService
+    private readonly notionDBService: NotionDBService,
+    private readonly notionWritesService: NotionWritesService
   ) {}
 
-  @Get()
-  async exportToMedium(): Promise<ExportResults> {
-    return this.notionService.processAndExportEntries();
-  }
-
-  @Get('test')
-  async testNotion(): Promise<any> {
-    return { working: 200 };
-  }
-
-  @Get('databases')
+  @Get('list-databases')
   async listDatabases() {
     return await this.notionService.listAccessibleDatabases();
   }
 
-  @Get('pages')
+  @Get('list-pages')
   async listPages() {
     return await this.notionService.listAccessiblePages();
   }
 
-  @Get('page/:pageId')
-  async getNotionPage(@Param('pageId') pageId: string): Promise<any> {
-    return this.notionService.getNotionPage(pageId);
+  @Get('page-and-blocks/:pageId')
+  async getNotionPageBlocks(@Param('pageId') pageId: string): Promise<any> {
+    return this.notionService.getNotionPageBlocks(pageId);
   }
 
-  @Get('page-content/:pageId')
-  async getNotionPageContent(@Param('pageId') pageId: string): Promise<any> {
-    return this.notionService.getNotionPageContent(pageId);
+  @Get('page-and-blocks-formatted/:pageId')
+  async getNotionPageBlocksFormatted(@Param('pageId') pageId: string): Promise<any> {
+    return this.notionService.getNotionPageBlocksFormatted(pageId);
   }
 
   @Get('db-entries/:dbId')
@@ -60,7 +52,7 @@ export class NotionController {
     const entries = await this.notionDBService.getDBEntries(dbId);
     console.log('entries', entries);
     for (const entry of entries) {
-      const pageContent = await this.notionService.getNotionPageContent(entry.id);
+      const pageContent = await this.notionService.getNotionPageBlocksFormatted(entry.id);
       console.log('pageContent', pageContent);
       const result = await this.notionDBService.upsertNotionPage({
         db_id: dbId,
@@ -99,5 +91,29 @@ export class NotionController {
     } else if (exportType === ExportType.SIMPLE_BLOCKS) {
       return pageContent;
     }
+  }
+
+  @Post('write-text-to-page/:pageId')
+  async writeTextToPage(@Param('pageId') pageId: string): Promise<any> {
+    return this.notionWritesService.updatePageContent(pageId, 'This is my text lets see if it works');
+  }
+
+  @Get('append-markdown-to-page/:pageId')
+  async appendMarkdownToPage(@Param('pageId') pageId: string): Promise<any> {
+    const markdown = `
+# Hello World
+
+This is a paragraph with **bold** and *italic* text.
+
+## Subheading
+
+- List item 1
+- List item 2
+- List item 3
+
+[Link to Google](https://www.google.com)
+`;
+
+    return this.notionWritesService.appendMarkdownToPage(pageId, markdown);
   }
 }

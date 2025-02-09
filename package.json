@@ -33,6 +33,7 @@
     "@nestjs/serve-static": "^5.0.2",
     "@nestjs/swagger": "^11.0.3",
     "@notionhq/client": "^2.2.15",
+    "@tryfabric/martian": "^1.2.4",
     "firebase-admin": "^13.0.2",
     "google-auth-library": "^9.15.1",
     "groq-sdk": "^0.15.0",
