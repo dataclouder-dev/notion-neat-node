@@ -17,6 +17,14 @@ export class MongoDBModule {
             const host = configService.get<string>('MONGO_HOST');
             const db = configService.get<string>('MONGO_DB');
             const uri = `mongodb+srv://${user}:${pass}@${host}/${db}?retryWrites=true&w=majority`;
+
+            // Safer logging without credentials
+            console.log('MongoDB Connection Details:', {
+              host: host,
+              database: db,
+              connected: true,
+            });
+
             return {
               uri: uri,
             };

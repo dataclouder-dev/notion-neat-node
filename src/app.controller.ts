@@ -24,7 +24,8 @@ export class AppController {
     return `
     <h1>API</h1>
     <ul>
-      <li><a href="/public/index.html"> Main Page </a></li>
+          <li><a href="/public/index.html"> Main Page </a></li>
+
       <li><a href="/docs"> Swagger Documentation </a></li>
     </ul>
     `;

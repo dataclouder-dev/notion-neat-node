@@ -2,9 +2,10 @@ include .env
 
 # Variables for deployment
 PROJECT_ID ?= dataclouder-dev
-IMAGE_NAME ?= node-app-image
+IMAGE_NAME ?= notion-data-neat-image
 REGION ?= us-central1
-SERVICE_NAME ?= node-server
+SERVICE_NAME ?= notion-data-neat
+
 
 .PHONY: deploy gcp-enable-services build-push deploy-service
 
