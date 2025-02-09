@@ -6,13 +6,6 @@ import { join } from 'path';
 export class AppController {
   constructor() {}
 
-  // @Get()
-  // serveStaticPage(@Res({ passthrough: true }) res: Response) {
-  //   return res.sendFile(join(__dirname, '..', 'src', 'public', 'index.html'));
-  // }
-
-  // constructor(@Inject('Mongo') private database: Db) {}
-
   @Get('favicon.ico')
   getFavicon(@Res() response: Response) {
     return response.status(204).send();
@@ -22,7 +15,7 @@ export class AppController {
   @Header('content-type', 'text/html')
   getHello(): string {
     return `
-    <h1>API</h1>
+    <h1>Bievenido al proyecto / Welcome </h1>
     <ul>
           <li><a href="/public/index.html"> Main Page </a></li>
 
