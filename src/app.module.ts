@@ -8,6 +8,7 @@ import { NotionModule } from './notion-module/notion.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { MongoDBModule } from './mongo-db/database.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { MongoDBModule } from './mongo-db/database.module';
     TestModule,
     MongoDBModule.forRoot(),
     NotionModule,
+    UserModule,
   ],
   controllers: [AppController],
 })
