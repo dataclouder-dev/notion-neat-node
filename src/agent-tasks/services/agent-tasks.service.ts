@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AgentTaskEntity, AgentTaskDocument } from '../schemas/agent-task.schema';
+import { AgentTask } from '../models/classes';
 
 @Injectable()
 export class AgentTasksService {
@@ -18,7 +19,7 @@ export class AgentTasksService {
     return this.agentTaskModel.findById(id).exec();
   }
 
-  async create(createAgentTaskDto: any) {
+  async create(createAgentTaskDto: AgentTask) {
     const createdTask = new this.agentTaskModel(createAgentTaskDto);
     return createdTask.save();
   }

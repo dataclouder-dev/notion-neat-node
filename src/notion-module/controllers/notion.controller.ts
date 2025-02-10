@@ -9,7 +9,7 @@ import { ExportType } from '../models/enums';
 import { NotionService } from '../services/notion.service';
 import { NotionDBService } from '../services/notion-db.service';
 
-@Controller('notion')
+@Controller('api/notion')
 export class NotionController {
   constructor(
     private readonly notionService: NotionService,
