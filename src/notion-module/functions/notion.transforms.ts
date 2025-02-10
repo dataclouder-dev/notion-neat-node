@@ -1,4 +1,19 @@
-import { NotionDBPage } from './models/classes';
+import { NotionDBPage } from '../models/classes';
+
+export function transformPropertyKeys(properties: Record<string, string>): Record<string, string> {
+  const transformedProperties: Record<string, string> = {};
+
+  for (const [key, value] of Object.entries(properties)) {
+    // Check if there's a key in parentheses
+    const match = key.match(/\((.*?)\)/);
+    // If there's a match, use the text in parentheses, otherwise use the original key splitting logic
+    const newKey = match ? match[1].trim() : key.split('-').pop()?.trim() || key;
+
+    transformedProperties[newKey] = value;
+  }
+
+  return transformedProperties;
+}
 
 export function renderPageContentToHtml(data: NotionDBPage) {
   if (!data || !data.blocks) {

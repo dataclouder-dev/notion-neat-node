@@ -3,8 +3,9 @@ import { BlockObjectResponse, DatabaseObjectResponse } from '@notionhq/client/bu
 // import { NotionPage } from 'notion-page-to-html/dist/main/use-cases/notion-api-to-html';
 
 // import NotionPageToHtml from 'notion-page-to-html';
-import { DbEntries, MediumStatus, SelectColor } from './types';
+// import { DbEntries, MediumStatus, SelectColor } from './types';
 import { NotionPage } from 'notion-page-to-html/dist/main/protocols/notion-page';
+import { DbEntries, MediumStatus, SelectColor } from '../models/types';
 
 export async function getHtmlPage(publicUrl: string): Promise<NotionPage> {
   //   const notionHtmlPage = await NotionPageToHtml.convert(publicUrl);

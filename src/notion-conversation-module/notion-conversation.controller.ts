@@ -7,35 +7,13 @@ import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 export class NotionConversationController {
   constructor(private readonly notionConversationService: NotionConversationService) {}
 
-  @ApiOperation({
-    summary: 'Extract dictionary data from a Notion page',
-    description:
-      'Retrieves content from a Notion page and converts it into a key-value dictionary format where titles are keys and text content are values',
-  })
-  @ApiParam({
-    name: 'pageId',
-    description: 'The ID of the Notion page to extract data from',
-    required: true,
-    type: String,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Dictionary data successfully extracted',
-    schema: {
-      type: 'object',
-      additionalProperties: {
-        type: 'string',
-      },
-      example: {
-        'Title 1': 'Content text 1',
-        'Title 2': 'Content text 2',
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid page ID' })
-  @ApiResponse({ status: 404, description: 'Notion page not found' })
-  @Get('extract-dict-data/:pageId')
-  async extractNotionDictData(@Param('pageId') pageId: string) {
-    return await this.notionConversationService.extractNotionDictData(pageId);
+  @Get('init-agent-conversation-task/:agentId/:db_id')
+  async initAgentConversationTask(@Param('agentId') agentId: string, @Param('db_id') db_id: string) {
+    agentId = '67a8e12e3a6c454dc2b56e53';
+    db_id = '195ec05d-c75e-80a4-83fe-e499a47f37dc';
+    return this.notionConversationService.initAgentConversationTask(agentId, db_id);
+
+    // TODO: Este metodo en realidad no necesita conversciones/agentscards asi mover a notion-module
+    // return await this.notionConversationService.initAgentConversationTask(agentId, db_id);
   }
 }

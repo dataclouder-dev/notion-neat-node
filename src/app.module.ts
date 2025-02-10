@@ -9,8 +9,9 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { MongoDBModule } from './mongo-db/database.module';
 import { UserModule } from './user/user.module';
-import { ConversationCardsModule } from '@dataclouder/conversation-card-nestjs';
 import { NotionConversationModule } from './notion-conversation-module/notion.module';
+import { ConversationCardsModule } from '@dataclouder/conversation-card-nestjs';
+import { AgentTasksModule } from './agent-tasks/agent-tasks.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { NotionConversationModule } from './notion-conversation-module/notion.mo
     UserModule,
     ConversationCardsModule,
     NotionConversationModule,
+    AgentTasksModule,
   ],
   controllers: [AppController],
 })

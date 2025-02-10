@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Client } from '@notionhq/client';
+import { CreatePageParameters } from '@notionhq/client/build/src/api-endpoints';
 import { markdownToBlocks } from '@tryfabric/martian';
 
 @Injectable()
@@ -162,5 +163,49 @@ export class NotionWritesService {
         error: error.message,
       };
     }
+  }
+
+  async createDatabaseEntry(databaseId: string, properties: CreatePageParameters['properties'] = null, title: string = 'New Entry') {
+    if (!properties) {
+      properties = {
+        Name: {
+          title: [
+            {
+              text: {
+                content: title,
+              },
+            },
+          ],
+        },
+      };
+    }
+
+    try {
+      const pageObject = {
+        parent: {
+          database_id: databaseId,
+        },
+        properties: properties,
+      };
+
+      const response = await this.notion.pages.create(pageObject);
+
+      return {
+        success: true,
+        page: response,
+      };
+    } catch (error) {
+      console.error('Error creating database entry:', error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  async createNewPageIntoDatabase(databaseId: string, contentMarkdown: string) {
+    const page = await this.createDatabaseEntry(databaseId, null, 'Post from Agent');
+    await this.appendMarkdownToPage(page.page.id, contentMarkdown);
+    return page;
   }
 }

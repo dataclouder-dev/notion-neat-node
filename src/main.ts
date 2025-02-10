@@ -1,6 +1,5 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { join } from 'path';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AllExceptionsHandler } from './common/exception-hanlder.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -17,10 +16,12 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsHandler());
 
   const config = new DocumentBuilder()
-    .setTitle('scaffolddataclouder APIs')
-    .setDescription('Documentación de las APIs de scaffolddataclouder')
+    .setTitle('Notion Neat API')
+    .setDescription('The Notion Neat API description')
     .setVersion('1.0')
+    .addTag('Notion Neat Tags')
     .addBearerAuth()
+
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Client } from '@notionhq/client';
-import { ExportResults, MediumStory } from './notion.types';
 import { BlockObjectResponse } from '@notionhq/client/build/src/api-endpoints';
+import { ExportResults } from '../models/notion.types';
+import { parseNotionBlocks } from '../notion-text-extraction/block-to-properties';
+import { transformPropertyKeys } from '../functions/notion.transforms';
 
 type NotionPageContent = {
   success: boolean;
@@ -19,6 +21,14 @@ export class NotionService {
     this.notion = new Client({
       auth: process.env.NOTION_KEY,
     });
+  }
+
+  async extractNotionDictData(pageId: string) {
+    // receive a pageId, extract the page content and return a dictionary where title2 is the key and the paragraph is the value
+    const pageAndBlocks = await this.getNotionPageBlocks(pageId);
+    const properties = parseNotionBlocks(pageAndBlocks.page.blocks);
+    const finalProperties = transformPropertyKeys(properties);
+    return finalProperties;
   }
 
   async processAndExportEntries(): Promise<ExportResults> {

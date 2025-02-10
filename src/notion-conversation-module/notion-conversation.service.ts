@@ -1,46 +1,48 @@
 import { Injectable } from '@nestjs/common';
 import { parseNotionBlocks } from 'src/notion-module/notion-text-extraction/block-to-properties';
-import { NotionService } from 'src/notion-module/notion.service';
+import { NotionService } from 'src/notion-module/services/notion.service';
 
-import { Conversation } from '@dataclouder/conversation-card-nestjs';
-
-const conversationProp = {
-  description: 'Description',
-  scenario: 'Scenario',
-  first_mes: 'First Message',
-  creator_notes: 'Creator Notes',
-  mes_example: 'Message Example',
-  alternate_greetings: 'Alternate Greetings',
-  tags: 'tags',
-  system_prompt: 'System Prompt',
-  post_history_instructions: 'Post History Instructions',
-  character_version: 'Character Version',
-  extensions: {},
-};
+// TODO: Creo que no estoy exportando el servicio de conversaciones
+import { ConversationAiService, buildInitialConversation } from '@dataclouder/conversation-card-nestjs';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+import { NotionWritesService } from 'src/notion-module/services/notion-writes.service';
 
 @Injectable()
 export class NotionConversationService {
-  constructor(private readonly notionService: NotionService) {}
+  constructor(
+    private readonly notionService: NotionService,
+    private readonly notionWritesService: NotionWritesService,
+    private conversationAiService: ConversationAiService,
+    private httpService: HttpService
+  ) {}
 
-  private transformPropertyKeys(properties: Record<string, string>): Record<string, string> {
-    const transformedProperties: Record<string, string> = {};
+  async initAgentConversationTask(agentId: string, db_id: string) {
+    const agentConversationCard = await this.conversationAiService.getConversationById(agentId);
+    // 1) Extraer el prompt del agente. creo que la funcion de prompt builder debería funcionar.
+    const chatMessages = buildInitialConversation(agentConversationCard);
+    const response = await this.callPythonAgent(chatMessages);
 
-    for (const [key, value] of Object.entries(properties)) {
-      // Check if there's a key in parentheses
-      const match = key.match(/\((.*?)\)/);
-      // If there's a match, use the text in parentheses, otherwise use the original key splitting logic
-      const newKey = match ? match[1].trim() : key.split('-').pop()?.trim() || key;
+    // guardar la conversacion en la base de datos de notion.
+    const notionResponse = await this.notionWritesService.createNewPageIntoDatabase(db_id, response.content);
 
-      transformedProperties[newKey] = value;
-    }
+    console.log(notionResponse);
+    // const db = await this.notionService.getNotionDatabase(db_id);
 
-    return transformedProperties;
+    return response;
   }
 
-  async extractNotionDictData(pageId: string) {
-    const pageAndBlocks = await this.notionService.getNotionPageBlocks(pageId);
-    const properties = parseNotionBlocks(pageAndBlocks.page.blocks);
-    const finalProperties = this.transformPropertyKeys(properties);
-    return finalProperties;
+  async callPythonAgent(chatMessages: any): Promise<{ content: string; role: string; metadata: any }> {
+    const request = {
+      messages: chatMessages,
+      modelName: '',
+      provider: '',
+      type: '',
+      additionalProp1: {},
+    };
+    const url = 'https://python-server-514401908603.us-central1.run.app/api/conversation/agent/chat';
+    const response = await firstValueFrom(this.httpService.post(url, request));
+    console.log(response);
+    return response.data;
   }
 }

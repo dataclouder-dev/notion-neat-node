@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
+
 import { Client } from '@notionhq/client';
-import { DbEntries, SelectColor } from './types';
 import { DatabaseObjectResponse } from '@notionhq/client/build/src/api-endpoints';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { NotionDBPageEntity, NotionDBPageDocument } from './entities/notion-db-page.entity';
-import { NotionDBPage } from './models/classes';
+
+import { NotionDBPageDocument, NotionDBPageEntity } from '../entities/notion-db-page.entity';
+import { NotionDBPage } from '../models/classes';
+import { DbEntries, SelectColor } from '../models/types';
 
 @Injectable()
 export class NotionDBService {
