@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
 import { AgentTasksService } from '../services/agent-tasks.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AgentTask } from '../models/classes';
@@ -22,13 +22,21 @@ export class AgentTasksController {
     return this.agentTasksService.findOne(id);
   }
 
+  @Get('execute/:id')
+  @ApiOperation({ summary: 'Execute an agent task by ID' })
+  @ApiResponse({ status: 200, description: 'Agent task executed successfully' })
+  @ApiResponse({ status: 404, description: 'Agent task not found' })
+  execute(@Param('id') id: string) {
+    return this.agentTasksService.execute(id);
+  }
+
   @Post()
   @ApiOperation({ summary: 'Create a new agent task' })
   @ApiResponse({ status: 201, description: 'Agent task created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
   create(@Body() createAgentTaskDto: AgentTask) {
     console.log(createAgentTaskDto);
-    return this.agentTasksService.create(createAgentTaskDto);
+    return this.agentTasksService.save(createAgentTaskDto);
   }
 
   @Put(':id')
@@ -38,5 +46,13 @@ export class AgentTasksController {
   @ApiResponse({ status: 400, description: 'Invalid request body' })
   update(@Param('id') id: string, @Body() updateAgentTaskDto: any) {
     return this.agentTasksService.update(id, updateAgentTaskDto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete an agent task by ID' })
+  @ApiResponse({ status: 200, description: 'Agent task deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Agent task not found' })
+  delete(@Param('id') id: string) {
+    return this.agentTasksService.delete(id);
   }
 }

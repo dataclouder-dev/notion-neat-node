@@ -203,9 +203,9 @@ export class NotionWritesService {
     }
   }
 
-  async createNewPageIntoDatabase(databaseId: string, contentMarkdown: string) {
-    const page = await this.createDatabaseEntry(databaseId, null, 'Post from Agent');
-    await this.appendMarkdownToPage(page.page.id, contentMarkdown);
+  async createNewPageIntoDatabase(data: { databaseId: string; title: string; contentMarkdown: string }) {
+    const page = await this.createDatabaseEntry(data.databaseId, null, data.title);
+    await this.appendMarkdownToPage(page.page.id, data.contentMarkdown);
     return page;
   }
 }

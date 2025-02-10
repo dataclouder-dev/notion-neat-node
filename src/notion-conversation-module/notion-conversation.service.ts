@@ -24,7 +24,11 @@ export class NotionConversationService {
     const response = await this.callPythonAgent(chatMessages);
 
     // guardar la conversacion en la base de datos de notion.
-    const notionResponse = await this.notionWritesService.createNewPageIntoDatabase(db_id, response.content);
+    const notionResponse = await this.notionWritesService.createNewPageIntoDatabase({
+      databaseId: db_id,
+      title: 'Conversación con el agente',
+      contentMarkdown: response.content,
+    });
 
     console.log(notionResponse);
     // const db = await this.notionService.getNotionDatabase(db_id);

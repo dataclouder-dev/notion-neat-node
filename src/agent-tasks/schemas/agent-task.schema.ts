@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { AgentTask } from '../models/classes';
-// import { addIdAfterSave } from 'src/mongo-db/utils';
+import { AgentTask, AgentTaskType } from '../models/classes';
+import { addIdAfterSave } from 'src/mongo-db/utils';
 
 export type AgentTaskDocument = AgentTaskEntity & Document;
 
@@ -27,8 +27,11 @@ export class AgentTaskEntity implements AgentTask {
 
   @Prop({ required: false })
   description: string;
+
+  @Prop({ required: false })
+  taskType: AgentTaskType;
 }
 
 export const AgentTaskSchema = SchemaFactory.createForClass(AgentTaskEntity);
 
-// addIdAfterSave(AgentTaskSchema);
+addIdAfterSave(AgentTaskSchema);
