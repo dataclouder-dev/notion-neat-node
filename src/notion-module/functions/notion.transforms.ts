@@ -1,4 +1,5 @@
 import { NotionDBPage } from '../models/classes';
+import { SimpleBlock } from '../services/notion.service';
 
 export function transformPropertyKeys(properties: Record<string, string>): Record<string, string> {
   const transformedProperties: Record<string, string> = {};
@@ -15,14 +16,14 @@ export function transformPropertyKeys(properties: Record<string, string>): Recor
   return transformedProperties;
 }
 
-export function renderPageContentToHtml(data: NotionDBPage) {
-  if (!data || !data.blocks) {
+export function renderPageContentToHtml(blocks: SimpleBlock[], title: string): string {
+  if (!blocks) {
     return 'Invalid page data';
   }
 
-  let htmlContent = `<h1>${data.title}</h1>`;
+  let htmlContent = `<h1>${title}</h1>`;
 
-  data.blocks.forEach(block => {
+  blocks.forEach(block => {
     switch (block.type) {
       case 'heading_1':
         htmlContent += `<h1>${block.content}</h1>`;
@@ -56,14 +57,14 @@ export function renderPageContentToHtml(data: NotionDBPage) {
   return htmlContent;
 }
 
-export function renderPageContentToMarkdown(data: NotionDBPage): string {
-  if (!data || !data.blocks) {
+export function renderPageContentToMarkdown(blocks: SimpleBlock[], title: string): string {
+  if (!blocks) {
     return 'Invalid page data';
   }
 
-  let markdownContent = `# ${data.title}\n\n`;
+  let markdownContent = `# ${title}\n\n`;
 
-  data.blocks.forEach(block => {
+  blocks.forEach(block => {
     switch (block.type) {
       case 'heading_1':
         markdownContent += `# ${block.content}\n\n`;
@@ -97,14 +98,14 @@ export function renderPageContentToMarkdown(data: NotionDBPage): string {
   return markdownContent;
 }
 
-export function extractPagePlainText(data: NotionDBPage): string {
-  if (!data || !data.blocks) {
+export function extractPagePlainText(blocks: SimpleBlock[], title: string): string {
+  if (!blocks) {
     return 'Invalid page data';
   }
 
-  let plainText = `${data.title}\n\n`;
+  let plainText = `${title}\n\n`;
 
-  data.blocks.forEach(block => {
+  blocks.forEach(block => {
     if (block.content) {
       plainText += `${block.content}\n`;
     }

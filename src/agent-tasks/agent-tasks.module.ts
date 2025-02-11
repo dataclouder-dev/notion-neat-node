@@ -7,16 +7,21 @@ import { HttpModule } from '@nestjs/axios';
 
 import { ConversationCardsModule } from '@dataclouder/conversation-card-nestjs';
 import { NotionModule } from 'src/notion-module/notion.module';
+import { AgentJobsController } from './controllers/agent-jobs.controller';
+import { AgentJobService } from './services/agent-job.service';
+import { AgentJobEntity, AgentJobSchema } from './schemas/agent-job.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: AgentTaskEntity.name, schema: AgentTaskSchema }]),
+    MongooseModule.forFeature([{ name: AgentJobEntity.name, schema: AgentJobSchema }]),
+
     HttpModule,
     ConversationCardsModule,
     NotionModule,
   ],
-  controllers: [AgentTasksController],
-  providers: [AgentTasksService],
-  exports: [AgentTasksService],
+  controllers: [AgentTasksController, AgentJobsController],
+  providers: [AgentTasksService, AgentJobService],
+  exports: [AgentTasksService, AgentJobService],
 })
 export class AgentTasksModule {}

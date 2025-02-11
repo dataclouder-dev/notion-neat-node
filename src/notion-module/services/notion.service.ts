@@ -3,14 +3,28 @@ import { Client } from '@notionhq/client';
 import { BlockObjectResponse } from '@notionhq/client/build/src/api-endpoints';
 import { ExportResults } from '../models/notion.types';
 import { parseNotionBlocks } from '../notion-text-extraction/block-to-properties';
-import { transformPropertyKeys } from '../functions/notion.transforms';
+import {
+  extractPagePlainText,
+  renderPageContentToHtml,
+  renderPageContentToMarkdown,
+  transformPropertyKeys,
+} from '../functions/notion.transforms';
+import { ExportType } from '../models/enums';
+import { NotionDBPage } from '../models/classes';
 
-type NotionPageContent = {
+export type SimpleBlock = {
+  type: string;
+  content: string;
+  has_children: boolean;
+  id: string;
+};
+
+export type NotionPageContent = {
   success: boolean;
   page: any;
   error?: string;
   title?: string;
-  blocks?: BlockObjectResponse[];
+  blocks?: SimpleBlock[];
 };
 @Injectable()
 export class NotionService {
@@ -95,6 +109,7 @@ export class NotionService {
   }
 
   async getNotionPageBlocksFormatted(pageId: string): Promise<NotionPageContent> {
+    // regresa la pagina, pero los bloques estan procesados en mi formato para almacenar facilmente y procesar contenido, en vez de tener todas las propiedades
     try {
       const pageResponse = await this.notion.pages.retrieve({
         page_id: pageId,
@@ -103,7 +118,8 @@ export class NotionService {
       const blocksResponse = await this.notion.blocks.children.list({
         block_id: pageId,
       });
-      const title = (pageResponse as any).properties?.Name?.title[0]?.plain_text;
+      // const title = (pageResponse as any).properties?.Name?.title[0]?.plain_text;
+      const title = (pageResponse as any).properties?.title?.title[0]?.plain_text;
       // Extract just the essential page info and content
       const pageContent = {
         title: title || 'Untitled',
@@ -223,6 +239,24 @@ export class NotionService {
         pages: [],
         count: 0,
       };
+    }
+  }
+
+  async getNotionContentInFormat(pageContent: NotionDBPage, exportType: ExportType) {
+    if (exportType === ExportType.HTML) {
+      const html = renderPageContentToHtml(pageContent.blocks, pageContent.title);
+      console.log('html', html);
+      return html;
+    } else if (exportType === ExportType.MARKDOWN) {
+      const markdown = renderPageContentToMarkdown(pageContent.blocks, pageContent.title);
+      console.log('markdown', markdown);
+      return markdown;
+    } else if (exportType === ExportType.PLAIN_TEXT) {
+      const plainText = extractPagePlainText(pageContent.blocks, pageContent.title);
+      console.log('plainText', plainText);
+      return plainText;
+    } else if (exportType === ExportType.SIMPLE_BLOCKS) {
+      return pageContent;
     }
   }
 }

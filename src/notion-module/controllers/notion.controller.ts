@@ -140,6 +140,10 @@ export class NotionController {
     return entries;
   }
 
+  @ApiOperation({
+    summary: 'Get a page content from MongoDB in a specific format',
+    description: 'Note, first you need to export the page content from Notion to MongoDB',
+  })
   @Get('get-db-page-content/:pageId')
   @ApiQuery({
     name: 'exportType',
@@ -151,15 +155,15 @@ export class NotionController {
     const pageContent = await this.notionDBService.getMongoDBPageContent(pageId);
     console.log('pageContent', pageContent);
     if (exportType === ExportType.HTML) {
-      const html = renderPageContentToHtml(pageContent);
+      const html = renderPageContentToHtml(pageContent.blocks, pageContent.title);
       console.log('html', html);
       return html;
     } else if (exportType === ExportType.MARKDOWN) {
-      const markdown = renderPageContentToMarkdown(pageContent);
+      const markdown = renderPageContentToMarkdown(pageContent.blocks, pageContent.title);
       console.log('markdown', markdown);
       return markdown;
     } else if (exportType === ExportType.PLAIN_TEXT) {
-      const plainText = extractPagePlainText(pageContent);
+      const plainText = extractPagePlainText(pageContent.blocks, pageContent.title);
       console.log('plainText', plainText);
       return plainText;
     } else if (exportType === ExportType.SIMPLE_BLOCKS) {

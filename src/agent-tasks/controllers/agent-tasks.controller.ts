@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
 import { AgentTasksService } from '../services/agent-tasks.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AgentTask } from '../models/classes';
+import { IAgentTask } from '../models/classes';
 
 @Controller('api/agent-tasks')
 export class AgentTasksController {
@@ -34,7 +34,7 @@ export class AgentTasksController {
   @ApiOperation({ summary: 'Create a new agent task' })
   @ApiResponse({ status: 201, description: 'Agent task created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
-  create(@Body() createAgentTaskDto: AgentTask) {
+  create(@Body() createAgentTaskDto: IAgentTask) {
     console.log(createAgentTaskDto);
     return this.agentTasksService.save(createAgentTaskDto);
   }
