@@ -1,3 +1,5 @@
+import { IAgentCard } from '@dataclouder/conversation-card-nestjs';
+
 export enum AgentTaskType {
   POST_NOTION = 'post_notion',
 }
@@ -8,10 +10,12 @@ export interface ISourceTask {
   type: string;
 }
 
+export type IAgentCardMinimal = Pick<IAgentCard, 'id' | 'assets' | 'title'> & { name: string };
+
 export interface IAgentTask {
   _id?: string;
   id: string;
-  idAgentCard: string;
+  agentCard: IAgentCardMinimal;
   name: string;
   description: string;
   status: string;
@@ -20,11 +24,12 @@ export interface IAgentTask {
   sources: ISourceTask[];
 }
 
+// Tiene una relación con el agente y la tarea. parcial asi muestro graficamente que pasa.
 export interface IAgentJob {
   _id?: string;
   id?: string;
-  idTask: string;
-  idAgentCard: string;
+  task: Partial<IAgentTask>;
+  agentCard: Partial<IAgentCardMinimal>;
   messages: any[];
   response: any;
 }

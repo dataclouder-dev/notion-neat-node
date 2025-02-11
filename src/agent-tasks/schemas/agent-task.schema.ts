@@ -1,12 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { IAgentTask, AgentTaskType, ISourceTask } from '../models/classes';
+import { IAgentTask, AgentTaskType, ISourceTask, IAgentCardMinimal } from '../models/classes';
 import { addIdAfterSave } from 'src/mongo-db/utils';
 
 export type AgentTaskDocument = AgentTaskEntity & Document;
 
 @Schema({ collection: 'agent_tasks', timestamps: true })
 export class AgentTaskEntity implements IAgentTask {
+  @Prop({ required: false, type: Object })
+  agentCard: IAgentCardMinimal;
+
   @Prop({ required: false })
   sources: ISourceTask[];
 
@@ -18,9 +21,6 @@ export class AgentTaskEntity implements IAgentTask {
 
   @Prop({ required: false })
   idNotionDB: string;
-
-  @Prop({ required: false })
-  idAgentCard: string;
 
   @Prop({ required: false })
   taskId: string;

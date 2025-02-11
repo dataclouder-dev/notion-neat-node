@@ -42,6 +42,6 @@ export class AgentJobService {
   }
 
   async findByTaskId(taskId: string): Promise<AgentJobDocument[]> {
-    return this.agentJobModel.find({ idTask: taskId }).exec();
+    return this.agentJobModel.find({ 'task.id': taskId }).exec();
   }
 }

@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AgentTaskEntity, AgentTaskDocument } from '../schemas/agent-task.schema';
-import { IAgentJob, IAgentTask } from '../models/classes';
-import { buildInitialConversation, ChatRole, ConversationAiService } from '@dataclouder/conversation-card-nestjs';
+import { IAgentJob, IAgentTask, ISourceTask } from '../models/classes';
+import { buildInitialConversation, ChatRole, ConversationAiService, IAgentCard } from '@dataclouder/conversation-card-nestjs';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { NotionWritesService } from 'src/notion-module/services/notion-writes.service';
@@ -28,7 +28,7 @@ export class AgentTasksService {
     return this.agentTaskModel.find().exec();
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<AgentTaskEntity> {
     return await this.agentTaskModel.findById(id).lean().exec();
   }
 
@@ -39,6 +39,13 @@ export class AgentTasksService {
 
   async save(createAgentTaskDto: IAgentTask) {
     const id = createAgentTaskDto.id || createAgentTaskDto._id;
+    if (createAgentTaskDto?.agentCard?.id) {
+      // TODO: fix this to only get assets
+      const agentCard = await this.conversationAiService.getConversationById(createAgentTaskDto.agentCard.id);
+      const { assets, title } = agentCard;
+      createAgentTaskDto.agentCard = { id: createAgentTaskDto.agentCard.id, assets, title, name: agentCard?.characterCard?.data?.name };
+    }
+
     if (id) {
       return this.update(id, createAgentTaskDto);
     } else {
@@ -71,13 +78,7 @@ export class AgentTasksService {
     return response.data;
   }
 
-  async execute(id: string) {
-    const task = await this.findOne(id);
-    if (!task) {
-      throw new Error('Task not found');
-    }
-    const { idAgentCard, taskType, sources } = task;
-
+  private async getNotionStringFromSources(sources: ISourceTask[]) {
     let infoFromSources = '';
     if (sources.length > 0) {
       for (const source of sources) {
@@ -90,8 +91,16 @@ export class AgentTasksService {
         infoFromSources += markdown;
       }
     }
-    console.log(idAgentCard, taskType);
-    const agentCard = await this.conversationAiService.getConversationById(idAgentCard);
+  }
+
+  async execute(id: string) {
+    const task: IAgentTask = await this.findOne(id);
+
+    if (!task) {
+      throw new Error('Task not found');
+    }
+    const infoFromSources = await this.getNotionStringFromSources(task.sources);
+    const agentCard: IAgentCard = await this.conversationAiService.getConversationById(task.agentCard.id);
 
     const chatMessages = buildInitialConversation(agentCard);
     chatMessages.push({
@@ -100,7 +109,6 @@ export class AgentTasksService {
     });
 
     const response = await this.callPythonAgent(chatMessages);
-    console.log(response);
 
     const notionResponse = await this.notionWritesService.createNewPageIntoDatabase({
       databaseId: task.idNotionDB,
@@ -109,20 +117,15 @@ export class AgentTasksService {
     });
 
     const job: IAgentJob = {
-      idTask: task.id,
-      idAgentCard: idAgentCard,
+      task: { id: task.id, name: task.name },
+      agentCard: { id: agentCard.id, assets: agentCard.assets, title: agentCard.title, name: agentCard?.characterCard?.data?.name },
       messages: chatMessages,
       response: response,
     };
 
     const jobCreated = await this.agentJobService.create(job);
-    console.log(jobCreated);
-    // const job = await this.agentJobService.create({
-    //   agentId: idAgentCard,
-    //   idTask: id,
-    //   status: 'completed',
-    // });
-    console.log(notionResponse);
+
+    console.log(jobCreated, notionResponse);
 
     return response;
   }
