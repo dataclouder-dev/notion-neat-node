@@ -3,7 +3,7 @@ import { parseNotionBlocks } from 'src/notion-module/notion-text-extraction/bloc
 import { NotionService } from 'src/notion-module/services/notion.service';
 
 // TODO: Creo que no estoy exportando el servicio de conversaciones
-import { ConversationAiService, buildInitialConversation } from '@dataclouder/conversation-card-nestjs';
+import { AgentCardService, buildInitialConversation } from '@dataclouder/conversation-card-nestjs';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { NotionWritesService } from 'src/notion-module/services/notion-writes.service';
@@ -13,7 +13,7 @@ export class NotionConversationService {
   constructor(
     private readonly notionService: NotionService,
     private readonly notionWritesService: NotionWritesService,
-    private conversationAiService: ConversationAiService,
+    private conversationAiService: AgentCardService,
     private httpService: HttpService
   ) {}
 

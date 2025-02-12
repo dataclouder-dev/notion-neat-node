@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
-import { NotionConversationService } from './notion-conversation.service';
+import { NotionConversationService } from '../notion-conversation.service';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Notion Conversation')

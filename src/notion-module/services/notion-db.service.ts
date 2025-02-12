@@ -9,6 +9,10 @@ import { NotionDBPageDocument, NotionDBPageEntity } from '../entities/notion-db-
 import { NotionDBPage } from '../models/classes';
 import { DbEntries, SelectColor } from '../models/types';
 
+/**
+ * Service for managing Notion database operations and their MongoDB persistence
+ * Handles interactions between Notion API and local MongoDB storage for database pages
+ */
 @Injectable()
 export class NotionDBService {
   private notionClient: Client;
@@ -23,11 +27,23 @@ export class NotionDBService {
     });
   }
 
+  /**
+   * Saves a Notion database page to MongoDB
+   * @param dbId - The Notion database ID
+   * @param pageId - The Notion page ID
+   * @param json - The raw JSON data of the page
+   * @returns Promise with the saved MongoDB document
+   */
   async saveDBPage(dbId: string, pageId: string, json: any): Promise<NotionDBPageDocument> {
     const notionDBPage = new this.notionDBPageModel({ db_id: dbId, page_id: pageId, json });
     return await notionDBPage.save();
   }
 
+  /**
+   * Updates an existing page or creates a new one if it doesn't exist
+   * @param pageData - Partial page data to update/insert
+   * @returns Promise with the updated or newly created MongoDB document
+   */
   async upsertNotionPage(pageData: Partial<NotionDBPageEntity>) {
     return await this.notionDBPageModel.findOneAndUpdate(
       { page_id: pageData.page_id }, // search criteria
@@ -39,17 +55,31 @@ export class NotionDBService {
     );
   }
 
+  /**
+   * Retrieves all entries from a specific Notion database
+   * @param dbId - The Notion database ID
+   * @returns Promise with an array of DatabaseObjectResponse
+   */
   async getDBEntries(dbId: string): Promise<DatabaseObjectResponse[]> {
-    // const notionClient = new Client({ auth: process.env.NOTION_KEY });
     const response = await this.notionClient.databases.query({ database_id: dbId });
     console.log('response', response);
     return response.results as DatabaseObjectResponse[];
   }
 
+  /**
+   * Retrieves a specific page content from MongoDB
+   * @param pageId - The Notion page ID
+   * @returns Promise with the NotionDBPage data
+   */
   async getMongoDBPageContent(pageId: string): Promise<NotionDBPage> {
     return this.notionDBPageModel.findOne({ page_id: pageId });
   }
 
+  /**
+   * Retrieves entries marked as 'Ready' from multiple Notion databases
+   * Database IDs are fetched from environment variables
+   * @returns Promise with database entries grouped by database ID
+   */
   async getEntriesReady(): Promise<DbEntries> {
     // Get multiples db from .evn
     const notionClient = new Client({ auth: process.env.NOTION_KEY });
@@ -69,6 +99,11 @@ export class NotionDBService {
     return dbEntries;
   }
 
+  /**
+   * Initializes required properties in a Notion database if they don't exist
+   * Checks for 'Medium Status' and 'Published' properties
+   * @param dbId - The Notion database ID
+   */
   async initPropertiesIsNeeded(dbId: string): Promise<void> {
     const notionClient = new Client({ auth: process.env.NOTION_KEY });
     const notionDB = await notionClient.databases.retrieve({ database_id: dbId });
@@ -80,6 +115,11 @@ export class NotionDBService {
     }
   }
 
+  /**
+   * Adds required properties to a Notion database
+   * Adds 'Published' date field and 'Medium Status' select field with predefined options
+   * @param dbId - The Notion database ID
+   */
   async addPropertiesToDatabase(dbId: string) {
     const notionClient = new Client({ auth: process.env.NOTION_KEY });
 

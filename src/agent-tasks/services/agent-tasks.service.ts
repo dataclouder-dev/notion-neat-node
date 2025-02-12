@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AgentTaskEntity, AgentTaskDocument } from '../schemas/agent-task.schema';
 import { IAgentJob, IAgentTask, ISourceTask } from '../models/classes';
-import { buildInitialConversation, ChatRole, ConversationAiService, IAgentCard } from '@dataclouder/conversation-card-nestjs';
+import { buildInitialConversation, ChatRole, AgentCardService, IAgentCard } from '@dataclouder/conversation-card-nestjs';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { NotionWritesService } from 'src/notion-module/services/notion-writes.service';
@@ -17,7 +17,7 @@ export class AgentTasksService {
   constructor(
     @InjectModel(AgentTaskEntity.name)
     private agentTaskModel: Model<AgentTaskDocument>,
-    private conversationAiService: ConversationAiService,
+    private conversationAiService: AgentCardService,
     private httpService: HttpService,
     private notionWritesService: NotionWritesService,
     private notionService: NotionService,
@@ -72,13 +72,14 @@ export class AgentTasksService {
       type: '',
       additionalProp1: {},
     };
-    const url = 'https://python-server-514401908603.us-central1.run.app/api/conversation/agent/chat';
+    const serverUrl = process.env.PYTHON_SERVER_URL;
+    const url = `${serverUrl}/api/conversation/agent/chat`;
     const response = await firstValueFrom(this.httpService.post(url, request));
     console.log(response);
     return response.data;
   }
 
-  private async getNotionStringFromSources(sources: ISourceTask[]) {
+  private async getNotionStringFromSources(sources: ISourceTask[]): Promise<string> {
     let infoFromSources = '';
     if (sources.length > 0) {
       for (const source of sources) {
@@ -91,6 +92,7 @@ export class AgentTasksService {
         infoFromSources += markdown;
       }
     }
+    return infoFromSources;
   }
 
   async execute(id: string) {
@@ -103,10 +105,17 @@ export class AgentTasksService {
     const agentCard: IAgentCard = await this.conversationAiService.getConversationById(task.agentCard.id);
 
     const chatMessages = buildInitialConversation(agentCard);
+
     chatMessages.push({
       role: ChatRole.System,
       content: 'This is the information from the sources: \n\n' + infoFromSources,
     });
+
+    chatMessages.push({ role: ChatRole.User, content: task.description });
+
+    if (agentCard.characterCard?.data?.post_history_instructions) {
+      chatMessages.push({ role: ChatRole.System, content: agentCard.characterCard.data.post_history_instructions });
+    }
 
     const response = await this.callPythonAgent(chatMessages);
 
@@ -121,6 +130,8 @@ export class AgentTasksService {
       agentCard: { id: agentCard.id, assets: agentCard.assets, title: agentCard.title, name: agentCard?.characterCard?.data?.name },
       messages: chatMessages,
       response: response,
+      sources: task.sources,
+      infoFromSources: infoFromSources,
     };
 
     const jobCreated = await this.agentJobService.create(job);

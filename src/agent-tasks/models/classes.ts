@@ -22,6 +22,8 @@ export interface IAgentTask {
   idNotionDB: string;
   taskType: AgentTaskType;
   sources: ISourceTask[];
+  provider: string;
+  modelName: string;
 }
 
 // Tiene una relación con el agente y la tarea. parcial asi muestro graficamente que pasa.
@@ -32,4 +34,6 @@ export interface IAgentJob {
   agentCard: Partial<IAgentCardMinimal>;
   messages: any[];
   response: any;
+  sources: ISourceTask[];
+  infoFromSources: string;
 }

@@ -47,50 +47,58 @@ export class NotionWritesService {
     }
   }
 
-  async createNewPage(parentPageId: string, title: string, content: string) {
+  async createNewPage(
+    parentPageId: string,
+    title: string,
+    content: string,
+    options?: {
+      coverUrl?: string;
+      iconUrl?: string;
+    }
+  ) {
     try {
-      const response = await this.notion.pages.create({
-        parent: {
-          page_id: parentPageId,
-        },
+      const pageObject: CreatePageParameters = {
+        parent: { page_id: parentPageId },
         properties: {
           title: {
-            title: [
-              {
-                text: {
-                  content: title,
-                },
-              },
-            ],
+            title: [{ text: { content: title } }],
           },
         },
         children: [
           {
             type: 'paragraph',
             paragraph: {
-              rich_text: [
-                {
-                  type: 'text',
-                  text: {
-                    content: content,
-                  },
-                },
-              ],
+              rich_text: [{ type: 'text', text: { content: content } }],
             },
           },
         ],
-      });
-
-      return {
-        success: true,
-        page: response,
       };
+
+      // Add cover if provided
+      if (options?.coverUrl) {
+        pageObject.cover = {
+          type: 'external',
+          external: {
+            url: options.coverUrl,
+          },
+        };
+      }
+
+      // Add icon if provided
+      if (options?.iconUrl) {
+        pageObject.icon = {
+          type: 'external',
+          external: {
+            url: options.iconUrl,
+          },
+        };
+      }
+
+      const response = await this.notion.pages.create(pageObject);
+      return { success: true, page: response };
     } catch (error) {
       console.error('Error creating new Notion page:', error);
-      return {
-        success: false,
-        error: error.message,
-      };
+      return { success: false, error: error.message };
     }
   }
 

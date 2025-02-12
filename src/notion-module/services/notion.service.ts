@@ -37,6 +37,11 @@ export class NotionService {
     });
   }
 
+  /**
+   * Extracts data from a Notion page and transforms it into a dictionary format
+   * @param pageId - The ID of the Notion page to extract data from
+   * @returns A dictionary where title2 is the key and paragraph is the value
+   */
   async extractNotionDictData(pageId: string) {
     // receive a pageId, extract the page content and return a dictionary where title2 is the key and the paragraph is the value
     const pageAndBlocks = await this.getNotionPageBlocks(pageId);
@@ -45,6 +50,10 @@ export class NotionService {
     return finalProperties;
   }
 
+  /**
+   * Processes and exports entries from a Notion database that have 'Ready to Export' status
+   * @returns Promise<ExportResults> containing the success status, entries, and count
+   */
   async processAndExportEntries(): Promise<ExportResults> {
     try {
       const response = await this.notion.databases.query({
@@ -81,21 +90,74 @@ export class NotionService {
     }
   }
 
+  /**
+   * Retrieves all blocks from a Notion page without their children
+   * @param pageId - The ID of the Notion page
+   * @returns Promise containing an array of BlockObjectResponse
+   */
+  async getAllBlocksFlat(pageId: string): Promise<BlockObjectResponse[]> {
+    let allBlocks: BlockObjectResponse[] = [];
+    let hasMore = true;
+    let startCursor = undefined;
+
+    while (hasMore) {
+      const response = await this.notion.blocks.children.list({
+        block_id: pageId,
+        start_cursor: startCursor,
+        page_size: 100,
+      });
+
+      allBlocks = [...allBlocks, ...(response.results as BlockObjectResponse[])];
+      hasMore = response.has_more;
+      startCursor = response.next_cursor;
+    }
+
+    return allBlocks;
+  }
+
+  /**
+   * Recursively retrieves all blocks and their children from a Notion page
+   * @param pageId - The ID of the Notion page
+   * @returns Promise containing an array of BlockObjectResponse including nested children
+   */
+  async getAllBlocksWithChildren(pageId: string): Promise<BlockObjectResponse[]> {
+    const blocks: BlockObjectResponse[] = [];
+
+    // Get all blocks for the page
+    const pageBlocks = await this.getAllBlocksFlat(pageId);
+
+    // Process each block and its children recursively
+    for (const block of pageBlocks) {
+      blocks.push(block);
+
+      // If the block has children, fetch them recursively
+      if (block.has_children) {
+        const childBlocks = await this.getAllBlocksWithChildren(block.id);
+        blocks.push(...childBlocks);
+      }
+    }
+
+    return blocks;
+  }
+
+  /**
+   * Retrieves a Notion page and all its blocks
+   * @param pageId - The ID of the Notion page
+   * @returns Object containing success status, page data, and blocks
+   */
   async getNotionPageBlocks(pageId: string) {
     try {
       const pageResponse = await this.notion.pages.retrieve({
         page_id: pageId,
       });
 
-      const blocksResponse = await this.notion.blocks.children.list({
-        block_id: pageId,
-      });
+      const allBlocks = await this.getAllBlocksWithChildren(pageId);
 
       return {
         success: true,
         page: {
           ...pageResponse,
-          blocks: blocksResponse.results,
+          blocks: allBlocks,
         },
       };
     } catch (error) {
@@ -108,22 +170,23 @@ export class NotionService {
     }
   }
 
+  /**
+   * Retrieves a Notion page with blocks formatted in a simplified structure
+   * @param pageId - The ID of the Notion page
+   * @returns Promise<NotionPageContent> containing formatted page content
+   */
   async getNotionPageBlocksFormatted(pageId: string): Promise<NotionPageContent> {
     // regresa la pagina, pero los bloques estan procesados en mi formato para almacenar facilmente y procesar contenido, en vez de tener todas las propiedades
     try {
-      const pageResponse = await this.notion.pages.retrieve({
-        page_id: pageId,
-      });
+      const pageResponse = await this.notion.pages.retrieve({ page_id: pageId });
 
-      const blocksResponse = await this.notion.blocks.children.list({
-        block_id: pageId,
-      });
+      const blocksResponse = await this.getAllBlocksFlat(pageId);
       // const title = (pageResponse as any).properties?.Name?.title[0]?.plain_text;
       const title = (pageResponse as any).properties?.title?.title[0]?.plain_text;
       // Extract just the essential page info and content
       const pageContent = {
         title: title || 'Untitled',
-        blocks: blocksResponse.results.map((block: BlockObjectResponse) => ({
+        blocks: blocksResponse.map((block: BlockObjectResponse) => ({
           type: block.type,
           content: this.extractBlockContent(block),
           has_children: block.has_children,
@@ -145,6 +208,11 @@ export class NotionService {
     }
   }
 
+  /**
+   * Extracts content from a Notion block based on its type
+   * @param block - The Notion block to extract content from
+   * @returns Extracted content as string or object for to_do blocks
+   */
   private extractBlockContent(block: any) {
     switch (block.type) {
       case 'paragraph':
@@ -170,6 +238,11 @@ export class NotionService {
     }
   }
 
+  /**
+   * Lists all databases accessible to the integration
+   * @param filter - Whether to return filtered (simplified) database information
+   * @returns Object containing success status, databases array, and count
+   */
   async listAccessibleDatabases(filter: boolean = true) {
     try {
       // Search for all databases the integration has access to
@@ -208,6 +281,10 @@ export class NotionService {
     }
   }
 
+  /**
+   * Lists all pages accessible to the integration
+   * @returns Object containing success status, pages array, and count
+   */
   async listAccessiblePages() {
     try {
       // Search for all pages the integration has access to
@@ -242,6 +319,12 @@ export class NotionService {
     }
   }
 
+  /**
+   * Converts Notion page content to a specified format
+   * @param pageContent - The NotionDBPage content to convert
+   * @param exportType - The desired export format (HTML, MARKDOWN, PLAIN_TEXT, or SIMPLE_BLOCKS)
+   * @returns Formatted content in the specified export type
+   */
   async getNotionContentInFormat(pageContent: NotionDBPage, exportType: ExportType) {
     if (exportType === ExportType.HTML) {
       const html = renderPageContentToHtml(pageContent.blocks, pageContent.title);

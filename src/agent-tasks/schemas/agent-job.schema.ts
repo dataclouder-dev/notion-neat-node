@@ -8,16 +8,16 @@ export type AgentJobDocument = AgentJobEntity & Document;
 
 @Schema({ collection: 'agent_jobs', timestamps: true })
 export class AgentJobEntity implements IAgentJob {
-  _id?: string;
-
+  @Prop({ required: false })
+  id: string;
   @Prop({ required: false, type: Object })
   task: Partial<IAgentTask>;
 
+  @Prop({ required: false })
+  infoFromSources: string;
+
   @Prop({ required: false, type: Object })
   agentCard: Partial<IAgentCard>;
-
-  @Prop({ required: false })
-  id: string;
 
   @Prop({ required: false })
   messages: any[];

@@ -6,7 +6,7 @@ import { DatabaseObjectResponse, CreatePageParameters } from '@notionhq/client/b
 import { extractPagePlainText, renderPageContentToHtml, renderPageContentToMarkdown } from '../functions/notion.transforms';
 import { NotionWritesService } from '../services/notion-writes.service';
 import { ExportType } from '../models/enums';
-import { NotionService } from '../services/notion.service';
+import { NotionPageContent, NotionService } from '../services/notion.service';
 import { NotionDBService } from '../services/notion-db.service';
 
 @Controller('api/notion')
@@ -112,7 +112,11 @@ export class NotionController {
   }
 
   @Get('page-and-blocks-formatted/:pageId')
-  async getNotionPageBlocksFormatted(@Param('pageId') pageId: string): Promise<any> {
+  @ApiOperation({
+    summary: 'Get a page content directly from Notion in minimal format, only text and block type',
+    description: 'Note, this is a direct call to Notion, so it may take longer to respond',
+  })
+  async getNotionPageBlocksFormatted(@Param('pageId') pageId: string): Promise<NotionPageContent> {
     return this.notionService.getNotionPageBlocksFormatted(pageId);
   }
 
@@ -269,5 +273,24 @@ Este es mi primer post with **compradres** y *camadrejas* .
     console.log('page', page);
 
     return page;
+  }
+
+  @Get('create-new-page')
+  async createNewPage() {
+    const cardImg =
+      'https://firebasestorage.googleapis.com/v0/b/notion-neat-dev.firebasestorage.app/o/conversation-cards%2F67abc07dedb31b871ec04a71%2Fcarlos.webp?alt=media&token=59e22f4d-92af-40e8-8fd5-1e48bc910cee';
+
+    const bannerImg =
+      'https://firebasestorage.googleapis.com/v0/b/notion-neat-dev.firebasestorage.app/o/conversation-cards%2Fcarlos.webp?alt=media&token=530c8d96-cecd-43de-bddd-9ab0be317e4a';
+
+    return this.notionWritesService.createNewPage(
+      '195ec05dc75e807e8085ffdb14575a90',
+      'testing New Page chamb 2',
+      'This is my new page content',
+      {
+        coverUrl: bannerImg,
+        iconUrl: cardImg,
+      }
+    );
   }
 }
