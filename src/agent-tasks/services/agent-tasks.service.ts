@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AgentTaskEntity, AgentTaskDocument } from '../schemas/agent-task.schema';
 import { IAgentJob, IAgentTask, ISourceTask } from '../models/classes';
-import { buildInitialConversation, ChatRole, AgentCardService, IAgentCard } from '@dataclouder/conversation-card-nestjs';
+import { buildInitialConversation, ChatRole, AgentCardService, IAgentCard, ChatMessage } from '@dataclouder/conversation-card-nestjs';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { NotionWritesService } from 'src/notion-module/services/notion-writes.service';
@@ -11,6 +11,7 @@ import { NotionService } from 'src/notion-module/services/notion.service';
 import { ExportType } from 'src/notion-module/models/enums';
 import { renderPageContentToHtml, renderPageContentToMarkdown } from 'src/notion-module/functions/notion.transforms';
 import { AgentJobService } from './agent-job.service';
+import { CreatePageParameters } from '@notionhq/client/build/src/api-endpoints';
 
 @Injectable()
 export class AgentTasksService {
@@ -64,12 +65,12 @@ export class AgentTasksService {
     return this.agentTaskModel.findByIdAndDelete(id).exec();
   }
 
-  async callPythonAgent(chatMessages: any): Promise<{ content: string; role: string; metadata: any }> {
+  async callPythonAgent(chatMessages: ChatMessage[], task: IAgentTask): Promise<{ content: string; role: string; metadata: any }> {
     const request = {
       messages: chatMessages,
-      modelName: '',
-      provider: '',
-      type: '',
+      modelName: task.modelName,
+      provider: task.provider,
+      type: task.taskType,
       additionalProp1: {},
     };
     const serverUrl = process.env.PYTHON_SERVER_URL;
@@ -101,43 +102,74 @@ export class AgentTasksService {
     if (!task) {
       throw new Error('Task not found');
     }
-    const infoFromSources = await this.getNotionStringFromSources(task.sources);
-    const agentCard: IAgentCard = await this.conversationAiService.getConversationById(task.agentCard.id);
+    let infoFromSources = null;
+    if (task?.sources?.length > 0) {
+      infoFromSources = await this.getNotionStringFromSources(task.sources);
+    }
+    // const agentCard: IAgentCard = await this.conversationAiService.getConversationById(task.agentCard.id);
 
-    const chatMessages = buildInitialConversation(agentCard);
+    const results = [];
 
-    chatMessages.push({
-      role: ChatRole.System,
-      content: 'This is the information from the sources: \n\n' + infoFromSources,
-    });
+    for (const agentCardMinimal of task.agentCards) {
+      const agentCard: IAgentCard = await this.conversationAiService.getConversationById(agentCardMinimal.id);
+      const chatMessages = buildInitialConversation(agentCard);
 
-    chatMessages.push({ role: ChatRole.User, content: task.description });
+      if (infoFromSources) {
+        chatMessages.push({
+          role: ChatRole.System,
+          content: 'This is the information from the sources: \n\n' + infoFromSources,
+        });
+      }
 
-    if (agentCard.characterCard?.data?.post_history_instructions) {
-      chatMessages.push({ role: ChatRole.System, content: agentCard.characterCard.data.post_history_instructions });
+      chatMessages.push({ role: ChatRole.User, content: task.description });
+
+      if (agentCard.characterCard?.data?.post_history_instructions) {
+        chatMessages.push({ role: ChatRole.System, content: agentCard.characterCard.data.post_history_instructions });
+      }
+
+      const response = await this.callPythonAgent(chatMessages, task);
+
+      // const notionResponse = await this.notionWritesService.createPageWithContentIntoDatabase({
+      //   databaseId: task.idNotionDB,
+      //   title: task.name,
+      //   contentMarkdown: response.content,
+      // });
+      const notionPage = await this.createNotionAgentPageAndAddContent(task, agentCard, response.content);
+
+      const job: IAgentJob = {
+        task: { id: task.id, name: task.name },
+        agentCard: { id: agentCard.id, assets: agentCard.assets, title: agentCard.title, name: agentCard?.characterCard?.data?.name },
+        messages: chatMessages,
+        response: response,
+        sources: task.sources,
+        infoFromSources: infoFromSources,
+      };
+
+      const jobCreated = await this.agentJobService.create(job);
+      results.push(jobCreated);
     }
 
-    const response = await this.callPythonAgent(chatMessages);
+    return results;
+  }
 
-    const notionResponse = await this.notionWritesService.createNewPageIntoDatabase({
-      databaseId: task.idNotionDB,
-      title: task.name,
-      contentMarkdown: response.content,
-    });
+  private async createNotionAgentPageAndAddContent(task: IAgentTask, agentCard: IAgentCard, mdContent: string) {
+    const results = [];
 
-    const job: IAgentJob = {
-      task: { id: task.id, name: task.name },
-      agentCard: { id: agentCard.id, assets: agentCard.assets, title: agentCard.title, name: agentCard?.characterCard?.data?.name },
-      messages: chatMessages,
-      response: response,
-      sources: task.sources,
-      infoFromSources: infoFromSources,
+    const properties: CreatePageParameters['properties'] = {
+      Name: { title: [{ text: { content: `${task.name} - ${agentCard.characterCard?.data?.name}` } }] },
+      Date: { date: { start: new Date().toISOString() } },
+      Agent: { rich_text: [{ text: { content: agentCard?.title ?? 'AI' } }] },
     };
 
-    const jobCreated = await this.agentJobService.create(job);
+    const notionPage = await this.notionWritesService.createDatabaseEntry({
+      databaseId: task.idNotionDB,
+      title: task.name,
+      children: [],
+      iconUrl: agentCard.assets.image.url,
+      properties: properties,
+    });
+    this.notionWritesService.appendMarkdownToPage(notionPage.page.id, mdContent);
 
-    console.log(jobCreated, notionResponse);
-
-    return response;
+    return notionPage;
   }
 }

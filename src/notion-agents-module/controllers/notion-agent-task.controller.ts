@@ -20,15 +20,27 @@ export class NotionAgentTaskController {
   @Get('create-agent-page/:agent_id')
   async createAgentPage(@Param('agent_id') agent_id: string) {
     const agentCard = await this.conversationAiService.getConversationById(agent_id);
-    const bannerImg = agentCard?.assets?.bannerImg;
-    const cardImg = agentCard?.assets?.image;
+    const bannerImg = agentCard?.assets?.bannerImg?.url || '';
+    const cardImg = agentCard?.assets?.image?.url || '';
 
-    const notionResponse = await this.notionWritesService.createNewPage(
-      '195ec05dc75e807e8085ffdb14575a90',
-      'Agent Page: ' + agentCard.title,
-      agentCard.characterCard?.data?.first_mes,
-      { coverUrl: bannerImg, iconUrl: cardImg }
+    const notionResponse = await this.notionWritesService.createNewPage({
+      parentPageId: '195ec05dc75e807e8085ffdb14575a90',
+      title: 'Agent: ' + agentCard.title,
+      content: agentCard.characterCard?.data?.first_mes,
+      coverUrl: bannerImg,
+      iconUrl: cardImg,
+    });
+
+    const dbResult = await this.notionWritesService.createInlineDatabase(
+      notionResponse.page.id,
+      `Tareas de ${agentCard?.characterCard?.data?.name}`,
+      {
+        Name: {
+          title: {},
+        },
+      }
     );
+    console.log('dbResult', dbResult);
 
     return notionResponse;
   }

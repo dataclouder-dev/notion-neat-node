@@ -252,7 +252,10 @@ export class NotionController {
       },
     };
 
-    const page = await this.notionWritesService.createDatabaseEntry(databaseId, properties);
+    const page = await this.notionWritesService.createDatabaseEntry({
+      databaseId,
+      properties,
+    });
 
     const markdown = `
 # Compadres
@@ -283,14 +286,17 @@ Este es mi primer post with **compradres** y *camadrejas* .
     const bannerImg =
       'https://firebasestorage.googleapis.com/v0/b/notion-neat-dev.firebasestorage.app/o/conversation-cards%2Fcarlos.webp?alt=media&token=530c8d96-cecd-43de-bddd-9ab0be317e4a';
 
-    return this.notionWritesService.createNewPage(
-      '195ec05dc75e807e8085ffdb14575a90',
-      'testing New Page chamb 2',
-      'This is my new page content',
-      {
-        coverUrl: bannerImg,
-        iconUrl: cardImg,
-      }
-    );
+    const notionResponse = await this.notionWritesService.createNewPage({
+      parentPageId: '195ec05dc75e807e8085ffdb14575a90',
+      title: 'testing New Page chamb 2',
+      content: 'This is my new page content',
+      coverUrl: bannerImg,
+      iconUrl: cardImg,
+    });
+
+    const dbResult = await this.notionWritesService.createInlineDatabase(notionResponse.page.id, 'Tasks_DB_Outcomes');
+    console.log('dbResult', dbResult);
+
+    return notionResponse;
   }
 }

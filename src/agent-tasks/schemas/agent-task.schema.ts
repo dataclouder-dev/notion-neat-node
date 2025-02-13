@@ -12,6 +12,9 @@ export class AgentTaskEntity implements IAgentTask {
   @Prop({ required: false, type: Object })
   agentCard: IAgentCardMinimal;
 
+  @Prop({ required: false, type: [Object] })
+  agentCards: IAgentCardMinimal[];
+
   @Prop({ required: false })
   sources: ISourceTask[];
 

@@ -16,6 +16,7 @@ export interface IAgentTask {
   _id?: string;
   id: string;
   agentCard: IAgentCardMinimal;
+  agentCards: IAgentCardMinimal[];
   name: string;
   description: string;
   status: string;
