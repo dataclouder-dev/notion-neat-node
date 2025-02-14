@@ -1,0 +1,29 @@
+{
+    "name": "@dataclouder/notion",
+    "version": "0.0.2",
+    "description": "NestJS library for Notion",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc -p tsconfig.lib.json",
+        "publish:npm": "npm run build && npm version patch && npm publish"
+    },
+    "keywords": [
+        "nestjs",
+        "library"
+    ],
+    "author": "dataclouder",
+    "license": "MIT",
+    "peerDependencies": {
+        "@nestjs/common": ">=10.0.0",
+        "@nestjs/core": ">=10.0.0",
+        "rxjs": ">=7.0.0",
+        "mongoose": ">=8.0.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}

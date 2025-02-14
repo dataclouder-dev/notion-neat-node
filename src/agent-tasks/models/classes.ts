@@ -38,3 +38,11 @@ export interface IAgentJob {
   sources: ISourceTask[];
   infoFromSources: string;
 }
+
+export interface ISourceLLM {
+  id: string;
+  img: string;
+  name: string;
+  type: string;
+  content: string;
+}

@@ -16,6 +16,14 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@dataclouder/notion": [
+        "libs/notion/src"
+      ],
+      "@dataclouder/notion/*": [
+        "libs/notion/src/*"
+      ]
+    }
   }
 }

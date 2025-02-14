@@ -10,18 +10,22 @@ import { NotionModule } from 'src/notion-module/notion.module';
 import { AgentJobsController } from './controllers/agent-jobs.controller';
 import { AgentJobService } from './services/agent-job.service';
 import { AgentJobEntity, AgentJobSchema } from './schemas/agent-job.schema';
+import { SourceLLMEntity, SourceLLMSchema } from './schemas/source-llm.schema';
+import { SourcesLLMService } from './services/sources-llm.service';
+import { SourcesLLMController } from './controllers/sources_llm.controller';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: AgentTaskEntity.name, schema: AgentTaskSchema }]),
     MongooseModule.forFeature([{ name: AgentJobEntity.name, schema: AgentJobSchema }]),
+    MongooseModule.forFeature([{ name: SourceLLMEntity.name, schema: SourceLLMSchema }]),
 
     HttpModule,
     ConversationCardsModule,
     NotionModule,
   ],
-  controllers: [AgentTasksController, AgentJobsController],
-  providers: [AgentTasksService, AgentJobService],
-  exports: [AgentTasksService, AgentJobService],
+  controllers: [AgentTasksController, AgentJobsController, SourcesLLMController],
+  providers: [AgentTasksService, AgentJobService, SourcesLLMService],
+  exports: [AgentTasksService, AgentJobService, SourcesLLMService],
 })
 export class AgentTasksModule {}
