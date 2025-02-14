@@ -6,7 +6,7 @@ import { AgentTaskEntity, AgentTaskSchema } from './schemas/agent-task.schema';
 import { HttpModule } from '@nestjs/axios';
 
 import { ConversationCardsModule } from '@dataclouder/conversation-card-nestjs';
-import { NotionModule } from 'src/notion-module/notion.module';
+import { NotionModule } from '@dataclouder/notion';
 import { AgentJobsController } from './controllers/agent-jobs.controller';
 import { AgentJobService } from './services/agent-job.service';
 import { AgentJobEntity, AgentJobSchema } from './schemas/agent-job.schema';

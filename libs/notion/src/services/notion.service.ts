@@ -9,7 +9,7 @@ import {
   renderPageContentToMarkdown,
   transformPropertyKeys,
 } from '../functions/notion.transforms';
-import { ExportType } from '../models/enums';
+import { NotionExportType } from '../models/enums';
 import { NotionDBPage } from '../models/classes';
 
 export type SimpleBlock = {
@@ -325,20 +325,20 @@ export class NotionService {
    * @param exportType - The desired export format (HTML, MARKDOWN, PLAIN_TEXT, or SIMPLE_BLOCKS)
    * @returns Formatted content in the specified export type
    */
-  async getNotionContentInFormat(pageContent: NotionDBPage, exportType: ExportType) {
-    if (exportType === ExportType.HTML) {
+  async getNotionContentInFormat(pageContent: NotionDBPage, exportType: NotionExportType) {
+    if (exportType === NotionExportType.HTML) {
       const html = renderPageContentToHtml(pageContent.blocks, pageContent.title);
       console.log('html', html);
       return html;
-    } else if (exportType === ExportType.MARKDOWN) {
+    } else if (exportType === NotionExportType.MARKDOWN) {
       const markdown = renderPageContentToMarkdown(pageContent.blocks, pageContent.title);
       console.log('markdown', markdown);
       return markdown;
-    } else if (exportType === ExportType.PLAIN_TEXT) {
+    } else if (exportType === NotionExportType.PLAIN_TEXT) {
       const plainText = extractPagePlainText(pageContent.blocks, pageContent.title);
       console.log('plainText', plainText);
       return plainText;
-    } else if (exportType === ExportType.SIMPLE_BLOCKS) {
+    } else if (exportType === NotionExportType.SIMPLE_BLOCKS) {
       return pageContent;
     }
   }

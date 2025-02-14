@@ -6,12 +6,15 @@ import { IAgentJob, IAgentTask, ISourceTask } from '../models/classes';
 import { buildInitialConversation, ChatRole, AgentCardService, IAgentCard, ChatMessage } from '@dataclouder/conversation-card-nestjs';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
-import { NotionWritesService } from 'src/notion-module/services/notion-writes.service';
-import { NotionService } from 'src/notion-module/services/notion.service';
-import { ExportType } from 'src/notion-module/models/enums';
-import { renderPageContentToHtml, renderPageContentToMarkdown } from 'src/notion-module/functions/notion.transforms';
+// import { NotionWritesService } from 'src/notion-module/services/notion-writes.service';
+// import { NotionService } from 'src/notion-module/services/notion.service';
+// import { ExportType } from 'src/notion-module/models/enums';
+// import { renderPageContentToHtml, renderPageContentToMarkdown } from 'src/notion-module/functions/notion.transforms';
 import { AgentJobService } from './agent-job.service';
 import { CreatePageParameters } from '@notionhq/client/build/src/api-endpoints';
+import { NotionService } from '@dataclouder/notion';
+import { NotionWritesService } from '@dataclouder/notion/services/notion-writes.service';
+import { renderPageContentToMarkdown } from '@dataclouder/notion/functions/notion.transforms';
 
 @Injectable()
 export class AgentTasksService {

@@ -40,8 +40,13 @@ deploy-service:
 	@echo "Deployment complete! You can check the status using:"
 	@echo "gcloud run services describe $(SERVICE_NAME) --region $(REGION)"
 
+publish-notion:
+	npm run publish:notion
+
+
 update-dc:
 	npm run update:dc
 
 update-all:
 	ncu -u
+	

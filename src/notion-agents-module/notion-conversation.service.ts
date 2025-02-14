@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { parseNotionBlocks } from 'src/notion-module/notion-text-extraction/block-to-properties';
-import { NotionService } from 'src/notion-module/services/notion.service';
+// import { parseNotionBlocks } from 'src/notion-module/notion-text-extraction/block-to-properties';
+// import { NotionService } from 'src/notion-module/services/notion.service';
 
 // TODO: Creo que no estoy exportando el servicio de conversaciones
 import { AgentCardService, buildInitialConversation } from '@dataclouder/conversation-card-nestjs';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { NotionWritesService } from 'src/notion-module/services/notion-writes.service';
+import { NotionWritesService } from '@dataclouder/notion/services/notion-writes.service';
+import { NotionService } from '@dataclouder/notion';
+// import { NotionWritesService } from '../../../notion-module/services/notion-writes.service';
 
 @Injectable()
 export class NotionConversationService {

@@ -1,4 +1,4 @@
-export enum ExportType {
+export enum NotionExportType {
   HTML = 'html',
   MARKDOWN = 'markdown',
   PLAIN_TEXT = 'plain_text',

@@ -1,15 +1,17 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { ApiQuery, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiQuery, ApiOperation, ApiResponse, ApiParam, ApiTags } from '@nestjs/swagger';
 
 import { DatabaseObjectResponse, CreatePageParameters } from '@notionhq/client/build/src/api-endpoints';
 
 import { extractPagePlainText, renderPageContentToHtml, renderPageContentToMarkdown } from '../functions/notion.transforms';
 import { NotionWritesService } from '../services/notion-writes.service';
-import { ExportType } from '../models/enums';
+import { NotionExportType } from '../models/enums';
 import { NotionPageContent, NotionService } from '../services/notion.service';
 import { NotionDBService } from '../services/notion-db.service';
+import { NotionDBPage } from '../models/classes';
 
 @Controller('api/notion')
+@ApiTags('Notion')
 export class NotionController {
   constructor(
     private readonly notionService: NotionService,
@@ -107,6 +109,10 @@ export class NotionController {
   }
 
   @Get('page-and-blocks/:pageId')
+  @ApiOperation({
+    summary: 'Get original Notion Page and Blocks objects',
+    description: 'Get data from notion returns original response from SDK',
+  })
   async getNotionPageBlocks(@Param('pageId') pageId: string): Promise<any> {
     return this.notionService.getNotionPageBlocks(pageId);
   }
@@ -121,11 +127,18 @@ export class NotionController {
   }
 
   @Get('db-entries/:dbId')
+  @ApiOperation({
+    summary: 'Pass the dbId and get all entries from the database',
+  })
   async getDBEntries(@Param('dbId') dbId: string): Promise<DatabaseObjectResponse[]> {
     return this.notionDBService.getDBEntries(dbId);
   }
 
-  @Get('export-db-pages/:dbId')
+  @Get('export-pages-into-db/:dbId')
+  @ApiOperation({
+    summary: 'Pass the dbId and export all pages into the database minimal format',
+    description: 'Once you have the data in the mongodb will be easy to process it',
+  })
   async exportDBPages(@Param('dbId') dbId: string): Promise<any> {
     const entries = await this.notionDBService.getDBEntries(dbId);
     console.log('entries', entries);
@@ -145,32 +158,53 @@ export class NotionController {
   }
 
   @ApiOperation({
-    summary: 'Get a page content from MongoDB in a specific format',
-    description: 'Note, first you need to export the page content from Notion to MongoDB',
+    summary: 'Get a page content from Notion in specific format',
+    description: 'can tranform to html, markdown, plain text or simple blocks',
   })
-  @Get('get-db-page-content/:pageId')
+  @Get('page-in-specific-format/:pageId')
   @ApiQuery({
     name: 'exportType',
-    enum: ExportType,
+    enum: NotionExportType,
     required: false,
     description: 'The format to export the page content in',
   })
-  async getDBPageContent(@Param('pageId') pageId: string, @Query('exportType') exportType: ExportType): Promise<any> {
+  async getPageContentInFormat(@Param('pageId') pageId: string, @Query('exportType') exportType: NotionExportType): Promise<any> {
+    const pageContent = await this.notionService.getNotionPageBlocksFormatted(pageId);
+    const content = this.transformNotionMinamalPageInFormat(pageContent.page, exportType);
+    return { content, type: exportType };
+  }
+
+  @ApiOperation({
+    summary: 'Get a page content that was previously saved into MongoDB in specific format',
+    description: 'Note, first you need to export the page content from Notion to MongoDB',
+  })
+  @Get('page-from-db-in-specific-format/:pageId')
+  @ApiQuery({
+    name: 'exportType',
+    enum: NotionExportType,
+    required: false,
+    description: 'The format to export the page content in',
+  })
+  async getDBPageContent(@Param('pageId') pageId: string, @Query('exportType') exportType: NotionExportType): Promise<any> {
     const pageContent = await this.notionDBService.getMongoDBPageContent(pageId);
     console.log('pageContent', pageContent);
-    if (exportType === ExportType.HTML) {
+    return this.transformNotionMinamalPageInFormat(pageContent, exportType);
+  }
+
+  private async transformNotionMinamalPageInFormat(pageContent: NotionDBPage, exportType: NotionExportType): Promise<any> {
+    if (exportType === NotionExportType.HTML) {
       const html = renderPageContentToHtml(pageContent.blocks, pageContent.title);
       console.log('html', html);
       return html;
-    } else if (exportType === ExportType.MARKDOWN) {
+    } else if (exportType === NotionExportType.MARKDOWN) {
       const markdown = renderPageContentToMarkdown(pageContent.blocks, pageContent.title);
       console.log('markdown', markdown);
       return markdown;
-    } else if (exportType === ExportType.PLAIN_TEXT) {
+    } else if (exportType === NotionExportType.PLAIN_TEXT) {
       const plainText = extractPagePlainText(pageContent.blocks, pageContent.title);
       console.log('plainText', plainText);
       return plainText;
-    } else if (exportType === ExportType.SIMPLE_BLOCKS) {
+    } else if (exportType === NotionExportType.SIMPLE_BLOCKS) {
       return pageContent;
     }
   }
