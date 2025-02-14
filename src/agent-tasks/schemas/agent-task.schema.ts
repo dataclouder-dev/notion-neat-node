@@ -7,8 +7,6 @@ export type AgentTaskDocument = AgentTaskEntity & Document;
 
 @Schema({ collection: 'agent_tasks', timestamps: true })
 export class AgentTaskEntity implements IAgentTask {
-  _id?: string;
-
   @Prop({ required: false, type: Object })
   agentCard: IAgentCardMinimal;
 
@@ -36,7 +34,7 @@ export class AgentTaskEntity implements IAgentTask {
   @Prop({ required: false })
   description: string;
 
-  @Prop({ required: false })
+  @Prop({ required: false, type: String, enum: AgentTaskType })
   taskType: AgentTaskType;
 
   @Prop({ required: false })
