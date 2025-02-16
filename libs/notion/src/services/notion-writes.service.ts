@@ -8,6 +8,16 @@ const defaultProperties: CreatePageParameters['properties'] = {
   Date: { date: { start: new Date().toISOString() } },
 };
 
+interface INotionDbPageParams {
+  databaseId: string;
+  properties?: CreatePageParameters['properties'];
+  title?: string;
+  children?: any[];
+  coverUrl?: string;
+  iconUrl?: string;
+  contentMarkdown?: string;
+}
+
 @Injectable()
 export class NotionWritesService {
   private notion: Client;
@@ -126,14 +136,7 @@ export class NotionWritesService {
    * @param params.iconUrl - Optional URL for the page icon
    * @returns An object containing success status and either the created page or error message
    */
-  async createDatabaseEntry(params: {
-    databaseId: string;
-    properties?: CreatePageParameters['properties'];
-    title?: string;
-    children?: any[];
-    coverUrl?: string;
-    iconUrl?: string;
-  }) {
+  async createDatabaseEntry(params: INotionDbPageParams) {
     const properties = params.properties ?? defaultProperties;
 
     try {
@@ -172,11 +175,8 @@ export class NotionWritesService {
         page: response,
       };
     } catch (error) {
-      console.error('Error creating database entry:', error);
-      return {
-        success: false,
-        error: error.message,
-      };
+      await this.handleErrors(error, params.databaseId);
+      console.log('try again manually createDatabaseEntry');
     }
   }
 
@@ -271,13 +271,17 @@ export class NotionWritesService {
    * @param data.contentMarkdown - The markdown content for the new page
    * @returns An object containing success status and either the created page or error message
    */
-  async createPageWithContentIntoDatabase(data: { databaseId: string; title: string; contentMarkdown: string }) {
+  async createPageWithContentIntoDatabase(data: INotionDbPageParams) {
     const page = await this.createDatabaseEntry({
       databaseId: data.databaseId,
       title: data.title,
-      children: [{ type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: data.contentMarkdown } }] } }],
+      properties: data.properties,
+      coverUrl: data.coverUrl,
+      iconUrl: data.iconUrl,
+      children: data.children,
     });
-    await this.appendMarkdownToPage(page.page.id, data.contentMarkdown);
+    const addedResponse = await this.appendMarkdownToPage(page.page.id, data.contentMarkdown);
+    console.log(addedResponse);
     return page;
   }
 
@@ -320,6 +324,10 @@ export class NotionWritesService {
         database: response,
       };
     } catch (error) {
+      if (error.message.includes('is not a property that exists')) {
+        await this.addPropertiesToDatabase(pageId, properties);
+        return this.createInlineDatabase(pageId, title, properties);
+      }
       console.error('Error creating inline database:', error);
       return {
         success: false,
@@ -328,36 +336,29 @@ export class NotionWritesService {
     }
   }
 
-  // async createInlineDatabaseAtEnd(pageId: string, title: string) {
-  //   try {
-  //     // Append the database directly to the page
-  //     const response = await this.notion.blocks.children.append({
-  //       block_id: pageId,
-  //       children: [
-  //         {
-  //           type: 'database',
-  //           child_database: {
-  //             title: title,
-  //             properties: {
-  //               Name: {
-  //                 title: {},
-  //               },
-  //             },
-  //           },
-  //         },
-  //       ],
-  //     } );
+  private async addPropertiesToDatabase(databaseId: string, properties: Record<string, any>) {
+    const response = await this.notion.databases.update({
+      database_id: databaseId,
+      properties: properties,
+    });
+  }
 
-  //     return {
-  //       success: true,
-  //       database: response,
-  //     };
-  //   } catch (error) {
-  //     console.error('Error creating inline database:', error);
-  //     return {
-  //       success: false,
-  //       error: error.message,
-  //     };
-  //   }
-  // }
+  private async handleErrors(error: any, databaseId: string) {
+    console.error('Error creating database entry:', error);
+    console.log(error);
+    if (error.message.includes('is not a property that exists')) {
+      try {
+        const newProp = {
+          Date: { type: 'date', date: {} },
+          Agent: { type: 'rich_text', rich_text: {} },
+        };
+        await this.addPropertiesToDatabase(databaseId, newProp);
+      } catch (error) {
+        console.error('Error adding properties to database:', error);
+        return { success: false, error: error.message };
+      }
+    }
+
+    return { success: false, error: error.message };
+  }
 }

@@ -7,14 +7,13 @@ import { TestModule } from './test/test.module';
 
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { MongoDBModule } from './mongo-db/database.module';
 import { UserModule } from './user/user.module';
 import { NotionAgentsModule } from './notion-agents-module/notion-agents.module';
 import { ConversationCardsModule } from '@dataclouder/conversation-card-nestjs';
 import { AgentTasksModule } from './agent-tasks/agent-tasks.module';
 
 import { NotionModule } from '@dataclouder/notion';
-
+import { DCMongoDBModule } from '@dataclouder/dc-mongo';
 @Module({
   imports: [
     ConfigModule.forRoot({ load: [envVariables], isGlobal: true }),
@@ -26,7 +25,7 @@ import { NotionModule } from '@dataclouder/notion';
       },
     }),
     TestModule,
-    MongoDBModule.forRoot(),
+    DCMongoDBModule.forRoot(),
     NotionModule,
     UserModule,
     ConversationCardsModule,

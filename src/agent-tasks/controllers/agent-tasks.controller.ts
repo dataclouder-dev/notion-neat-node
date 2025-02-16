@@ -2,6 +2,8 @@ import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common'
 import { AgentTasksService } from '../services/agent-tasks.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IAgentTask } from '../models/classes';
+import { FiltersConfig, IQueryResponse } from '@dataclouder/dc-mongo';
+import { AgentTaskEntity } from '../schemas/agent-task.schema';
 
 @Controller('api/agent-tasks')
 export class AgentTasksController {
@@ -37,6 +39,13 @@ export class AgentTasksController {
   create(@Body() createAgentTaskDto: IAgentTask) {
     console.log(createAgentTaskDto);
     return this.agentTasksService.save(createAgentTaskDto);
+  }
+
+  @Post('query')
+  @ApiOperation({ summary: 'Create a new generic item' })
+  @ApiResponse({ status: 201, description: 'The item has been successfully created.', type: AgentTaskEntity })
+  async query(@Body() filterConfig: FiltersConfig): Promise<IQueryResponse> {
+    return await this.agentTasksService.queryUsingFiltersConfig(filterConfig);
   }
 
   @Put(':id')

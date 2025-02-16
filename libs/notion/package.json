@@ -1,6 +1,6 @@
 {
     "name": "@dataclouder/notion",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "NestJS library for Notion",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

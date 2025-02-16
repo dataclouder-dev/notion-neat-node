@@ -20,11 +20,15 @@ export interface IAgentTask {
   name: string;
   description: string;
   status: string;
-  idNotionDB: string;
   taskType: AgentTaskType;
   sources: ISourceTask[];
   provider: string;
   modelName: string;
+  notionOutput: {
+    id: string;
+    name: string;
+    type: string;
+  };
 }
 
 // Tiene una relación con el agente y la tarea. parcial asi muestro graficamente que pasa.
@@ -32,17 +36,26 @@ export interface IAgentJob {
   _id?: string;
   id?: string;
   task: Partial<IAgentTask>;
-  agentCard: Partial<IAgentCardMinimal>;
+  agentCard?: Partial<IAgentCardMinimal>;
   messages: any[];
   response: any;
-  sources: ISourceTask[];
-  infoFromSources: string;
+  sources?: ISourceTask[];
+  infoFromSources?: string;
+}
+
+export enum SourceType {
+  DOCUMENT = 'document',
+  WEBSITE = 'website',
+  API = 'api',
+  NOTION = 'notion',
 }
 
 export interface ISourceLLM {
   id: string;
-  img: string;
   name: string;
-  type: string;
+  description: string;
+  type: SourceType;
+  sourceUrl: string;
   content: string;
+  img: string;
 }

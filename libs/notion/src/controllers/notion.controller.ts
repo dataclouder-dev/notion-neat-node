@@ -168,9 +168,12 @@ export class NotionController {
     required: false,
     description: 'The format to export the page content in',
   })
-  async getPageContentInFormat(@Param('pageId') pageId: string, @Query('exportType') exportType: NotionExportType): Promise<any> {
+  async getPageContentInFormat(
+    @Param('pageId') pageId: string,
+    @Query('exportType') exportType: NotionExportType = NotionExportType.PLAIN_TEXT
+  ): Promise<any> {
     const pageContent = await this.notionService.getNotionPageBlocksFormatted(pageId);
-    const content = this.transformNotionMinamalPageInFormat(pageContent.page, exportType);
+    const content = await this.transformNotionMinamalPageInFormat(pageContent.page, exportType);
     return { content, type: exportType };
   }
 

@@ -8,6 +8,9 @@ export type AgentTaskDocument = AgentTaskEntity & Document;
 @Schema({ collection: 'agent_tasks', timestamps: true })
 export class AgentTaskEntity implements IAgentTask {
   @Prop({ required: false, type: Object })
+  notionOutput: { id: string; name: string; type: string };
+
+  @Prop({ required: false, type: Object })
   agentCard: IAgentCardMinimal;
 
   @Prop({ required: false, type: [Object] })

@@ -13,13 +13,14 @@ import { AgentJobEntity, AgentJobSchema } from './schemas/agent-job.schema';
 import { SourceLLMEntity, SourceLLMSchema } from './schemas/source-llm.schema';
 import { SourcesLLMService } from './services/sources-llm.service';
 import { SourcesLLMController } from './controllers/sources_llm.controller';
+import { DCMongoDBModule } from '@dataclouder/dc-mongo';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: AgentTaskEntity.name, schema: AgentTaskSchema }]),
     MongooseModule.forFeature([{ name: AgentJobEntity.name, schema: AgentJobSchema }]),
     MongooseModule.forFeature([{ name: SourceLLMEntity.name, schema: SourceLLMSchema }]),
-
+    DCMongoDBModule,
     HttpModule,
     ConversationCardsModule,
     NotionModule,

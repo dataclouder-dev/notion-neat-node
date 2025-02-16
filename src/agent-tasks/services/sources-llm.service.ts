@@ -19,9 +19,17 @@ export class SourcesLLMService {
     return this.sourceLLMModel.findOne({ id }).exec();
   }
 
+  async findManyByIds(ids: string[]): Promise<SourceLLMEntity[]> {
+    return this.sourceLLMModel.find({ id: { $in: ids } }).exec();
+  }
+
   async save(sourceLLM: ISourceLLM): Promise<SourceLLMEntity> {
-    const createdSourceLLM = new this.sourceLLMModel(sourceLLM);
-    return createdSourceLLM.save();
+    if (sourceLLM.id) {
+      return this.update(sourceLLM.id, sourceLLM);
+    } else {
+      const createdSourceLLM = new this.sourceLLMModel(sourceLLM);
+      return createdSourceLLM.save();
+    }
   }
 
   async update(id: string, sourceLLM: ISourceLLM): Promise<SourceLLMEntity> {
