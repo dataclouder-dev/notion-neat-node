@@ -10,9 +10,9 @@ import { NotionModule } from '@dataclouder/notion';
 import { AgentJobsController } from './controllers/agent-jobs.controller';
 import { AgentJobService } from './services/agent-job.service';
 import { AgentJobEntity, AgentJobSchema } from './schemas/agent-job.schema';
-import { SourceLLMEntity, SourceLLMSchema } from './schemas/source-llm.schema';
-import { SourcesLLMService } from './services/sources-llm.service';
-import { SourcesLLMController } from './controllers/sources_llm.controller';
+import { SourceLLMEntity, SourceLLMSchema } from './schemas/agent-sources.schema';
+import { SourcesLLMService } from './services/agent-sources.service';
+import { SourcesLLMController } from './controllers/agent-sources.controller';
 import { DCMongoDBModule } from '@dataclouder/dc-mongo';
 
 @Module({

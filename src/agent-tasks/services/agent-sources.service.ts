@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { SourceLLMDocument, SourceLLMEntity } from '../schemas/source-llm.schema';
-import { ISourceLLM } from '../models/classes';
+import { SourceLLMDocument, SourceLLMEntity } from '../schemas/agent-sources.schema';
+import { IAgentSource } from '../models/classes';
+
+import { YouTubeService } from '../../youtube/functions';
 
 @Injectable()
 export class SourcesLLMService {
@@ -23,7 +25,7 @@ export class SourcesLLMService {
     return this.sourceLLMModel.find({ id: { $in: ids } }).exec();
   }
 
-  async save(sourceLLM: ISourceLLM): Promise<SourceLLMEntity> {
+  async save(sourceLLM: IAgentSource): Promise<SourceLLMEntity> {
     if (sourceLLM.id) {
       return this.update(sourceLLM.id, sourceLLM);
     } else {
@@ -32,11 +34,17 @@ export class SourcesLLMService {
     }
   }
 
-  async update(id: string, sourceLLM: ISourceLLM): Promise<SourceLLMEntity> {
+  async update(id: string, sourceLLM: IAgentSource): Promise<SourceLLMEntity> {
     return this.sourceLLMModel.findOneAndUpdate({ id }, sourceLLM, { new: true }).exec();
   }
 
   async delete(id: string): Promise<SourceLLMEntity> {
     return this.sourceLLMModel.findOneAndDelete({ id }).exec();
+  }
+
+  async getYoutubeTranscript(url: string): Promise<any> {
+    const youtubeService = new YouTubeService(process.env.YOUTUBE_API_KEY);
+    const transcript = await youtubeService.getVideoTranscript(url);
+    return transcript;
   }
 }

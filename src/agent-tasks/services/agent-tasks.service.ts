@@ -1,23 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { AgentTaskEntity, AgentTaskDocument } from '../schemas/agent-task.schema';
-import { AgentTaskType, IAgentJob, IAgentTask, ISourceTask } from '../models/classes';
-import { buildInitialConversation, ChatRole, AgentCardService, IAgentCard, ChatMessage } from '@dataclouder/conversation-card-nestjs';
+
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
-// import { NotionWritesService } from 'src/notion-module/services/notion-writes.service';
-// import { NotionService } from 'src/notion-module/services/notion.service';
-// import { ExportType } from 'src/notion-module/models/enums';
-// import { renderPageContentToHtml, renderPageContentToMarkdown } from 'src/notion-module/functions/notion.transforms';
-import { AgentJobService } from './agent-job.service';
 import { CreatePageParameters } from '@notionhq/client/build/src/api-endpoints';
-import { NotionService } from '@dataclouder/notion';
-import { NotionWritesService } from '@dataclouder/notion/services/notion-writes.service';
-import { renderPageContentToMarkdown } from '@dataclouder/notion/functions/notion.transforms';
-import { FiltersConfig, IQueryResponse } from '@dataclouder/dc-mongo';
-import { MongoService } from '@dataclouder/dc-mongo';
-import { SourcesLLMService } from './sources-llm.service';
+// @dataclouder libs
+import { FiltersConfig, IQueryResponse, MongoService } from '@dataclouder/dc-mongo';
+import { NotionService, NotionWritesService, renderPageContentToMarkdown } from '@dataclouder/notion';
+import { buildInitialConversation, ChatRole, AgentCardService, IAgentCard, ChatMessage } from '@dataclouder/conversation-card-nestjs';
+// local
+import { AgentTaskEntity, AgentTaskDocument } from '../schemas/agent-task.schema';
+import { AgentTaskType, IAgentJob, IAgentTask, ISourceTask } from '../models/classes';
+import { AgentJobService } from './agent-job.service';
+import { SourcesLLMService } from './agent-sources.service';
+import { AppException } from 'src/common/app-exception';
 @Injectable()
 export class AgentTasksService {
   constructor(
@@ -86,9 +83,15 @@ export class AgentTasksService {
     };
     const serverUrl = process.env.PYTHON_SERVER_URL;
     const url = `${serverUrl}/api/conversation/agent/chat`;
-    const response = await firstValueFrom(this.httpService.post(url, request));
-    console.log(response);
-    return response.data;
+    console.log('Sending agent request: ', request.provider, request.modelName, request.type);
+    try {
+      const response = await firstValueFrom(this.httpService.post(url, request));
+      console.log('Agent Service response: ', response.data.content.slice(0, 100));
+      return response.data;
+    } catch (error) {
+      console.error('Error calling Python agent: ', error);
+      throw new AppException({ error_message: 'Error calling Python web service agent: ' + error.message, explanation: error.response.data });
+    }
   }
 
   private async getNotionStringFromSources(sources: ISourceTask[]): Promise<string> {
@@ -120,14 +123,8 @@ export class AgentTasksService {
         infoFromSources += `\n\n<Text from ${source.name}>\n\n`;
         infoFromSources += source.content;
       }
-      console.log(sources);
-      console.log(infoFromSources);
-
-      // infoFromSources = sources.map((source) => source.content).join('\n\n');
-
-      // infoFromSources = await this.getNotionStringFromSources(task.sources);
+      console.log('-> Getting info from sources: ', infoFromSources.slice(0, 100), '...');
     }
-    // const agentCard: IAgentCard = await this.conversationAiService.getConversationById(task.agentCard.id);
 
     const results = [];
 
@@ -199,8 +196,7 @@ export class AgentTasksService {
             Agent: { rich_text: [{ text: { content: agentCardMinimal?.title ?? 'AI' } }] },
           },
         });
-        console.log(notionResponse);
-        // const notionPage = await this.createNotionAgentPageAndAddContent(task, agentCard, response.content);
+        console.log('page added: ', notionResponse?.page?.id);
 
         const job: IAgentJob = {
           task: { id: task.id, name: task.name },
@@ -212,6 +208,7 @@ export class AgentTasksService {
         };
 
         const jobCreated = await this.agentJobService.create(job);
+        console.log('finished job for: ', jobCreated?.task?.name);
         results.push(jobCreated);
       }
     }

@@ -29,6 +29,7 @@ export class AgentTasksController {
   @ApiResponse({ status: 200, description: 'Agent task executed successfully' })
   @ApiResponse({ status: 404, description: 'Agent task not found' })
   execute(@Param('id') id: string) {
+    console.log('executing task: ', id);
     return this.agentTasksService.execute(id);
   }
 

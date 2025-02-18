@@ -1,12 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { ISourceLLM, SourceType } from '../models/classes';
+import { IAgentSource, SourceType } from '../models/classes';
 import { addIdAfterSave } from 'src/mongo-db/utils';
 
 export type SourceLLMDocument = SourceLLMEntity & Document;
 
 @Schema({ collection: 'sources_llm', timestamps: true })
-export class SourceLLMEntity implements ISourceLLM {
+export class SourceLLMEntity implements IAgentSource {
   @Prop({ required: false })
   id: string;
 
@@ -27,6 +27,9 @@ export class SourceLLMEntity implements ISourceLLM {
 
   @Prop({ required: false })
   content: string;
+
+  @Prop({ required: false })
+  contentEnhancedAI: string;
 }
 
 export const SourceLLMSchema = SchemaFactory.createForClass(SourceLLMEntity);

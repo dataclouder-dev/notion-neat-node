@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { SourcesLLMService } from '../services/sources-llm.service';
-import { ISourceLLM } from '../models/classes';
+import { SourcesLLMService } from '../services/agent-sources.service';
+import { IAgentSource } from '../models/classes';
 
 @Controller('api/sources-llm')
 export class SourcesLLMController {
@@ -12,6 +12,15 @@ export class SourcesLLMController {
   @ApiResponse({ status: 200, description: 'All LLM sources retrieved successfully' })
   findAll() {
     return this.sourcesLLMService.findAll();
+  }
+
+  @Get('youtube-transcript')
+  @ApiOperation({ summary: 'Get an LLM source by ID' })
+  @ApiResponse({ status: 200, description: 'LLM source retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'LLM source not found' })
+  getYoutubeTranscript(@Query('url') url: string) {
+    console.log(url);
+    return this.sourcesLLMService.getYoutubeTranscript(url);
   }
 
   @Get(':id')
@@ -26,7 +35,7 @@ export class SourcesLLMController {
   @ApiOperation({ summary: 'Create a new LLM source' })
   @ApiResponse({ status: 201, description: 'LLM source created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
-  create(@Body() createSourceLLMDto: ISourceLLM) {
+  create(@Body() createSourceLLMDto: IAgentSource) {
     return this.sourcesLLMService.save(createSourceLLMDto);
   }
 
@@ -35,7 +44,7 @@ export class SourcesLLMController {
   @ApiResponse({ status: 200, description: 'LLM source updated successfully' })
   @ApiResponse({ status: 404, description: 'LLM source not found' })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
-  update(@Param('id') id: string, @Body() updateSourceLLMDto: ISourceLLM) {
+  update(@Param('id') id: string, @Body() updateSourceLLMDto: IAgentSource) {
     return this.sourcesLLMService.update(id, updateSourceLLMDto);
   }
 

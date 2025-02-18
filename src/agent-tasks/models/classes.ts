@@ -46,16 +46,17 @@ export interface IAgentJob {
 export enum SourceType {
   DOCUMENT = 'document',
   WEBSITE = 'website',
-  API = 'api',
+  YOUTUBE = 'youtube',
   NOTION = 'notion',
 }
 
-export interface ISourceLLM {
+export interface IAgentSource {
   id: string;
   name: string;
   description: string;
   type: SourceType;
   sourceUrl: string;
   content: string;
+  contentEnhancedAI?: string;
   img: string;
 }

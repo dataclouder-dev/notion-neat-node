@@ -137,6 +137,7 @@ export class NotionWritesService {
    * @returns An object containing success status and either the created page or error message
    */
   async createDatabaseEntry(params: INotionDbPageParams) {
+    console.log('-> Creating database entry: ', params.title);
     const properties = params.properties ?? defaultProperties;
 
     try {
@@ -175,8 +176,8 @@ export class NotionWritesService {
         page: response,
       };
     } catch (error) {
+      console.log('There is an error: trying to handle it: ', error);
       await this.handleErrors(error, params.databaseId);
-      console.log('try again manually createDatabaseEntry');
     }
   }
 
@@ -281,7 +282,7 @@ export class NotionWritesService {
       children: data.children,
     });
     const addedResponse = await this.appendMarkdownToPage(page.page.id, data.contentMarkdown);
-    console.log(addedResponse);
+    console.log('appendMarkdownToPage blocks: ', addedResponse.block.results.length);
     return page;
   }
 
