@@ -2,12 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { AgentJobDocument, AgentJobEntity } from '../schemas/agent-job.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { FiltersConfig, IQueryResponse, MongoService } from '@dataclouder/dc-mongo';
 
 @Injectable()
 export class AgentJobService {
   constructor(
     @InjectModel(AgentJobEntity.name)
-    private agentJobModel: Model<AgentJobDocument>
+    private agentJobModel: Model<AgentJobDocument>,
+    private mongoService: MongoService
   ) {}
 
   async create(createJobDto: Partial<AgentJobEntity>): Promise<AgentJobDocument> {
@@ -43,5 +45,15 @@ export class AgentJobService {
 
   async findByTaskId(taskId: string): Promise<AgentJobDocument[]> {
     return this.agentJobModel.find({ 'task.id': taskId }).exec();
+  }
+
+  async findByTaskAttachedIdToday(taskAttachedId: string): Promise<AgentJobDocument[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return this.agentJobModel.find({ 'task.id': taskAttachedId, createdAt: { $gte: today } }).exec();
+  }
+
+  async queryUsingFiltersConfig(filterConfig: FiltersConfig): Promise<IQueryResponse> {
+    return await this.mongoService.queryUsingFiltersConfig(filterConfig, this.agentJobModel);
   }
 }

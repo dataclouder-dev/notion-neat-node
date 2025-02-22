@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SourcesLLMService } from '../services/agent-sources.service';
 import { IAgentSource } from '../models/classes';
+import { FiltersConfig } from '@dataclouder/conversation-card-nestjs';
 
 @Controller('api/sources-llm')
 export class SourcesLLMController {
@@ -37,6 +38,14 @@ export class SourcesLLMController {
   @ApiResponse({ status: 400, description: 'Invalid request body' })
   create(@Body() createSourceLLMDto: IAgentSource) {
     return this.sourcesLLMService.save(createSourceLLMDto);
+  }
+
+  @Post('/query')
+  @ApiOperation({ summary: 'Create a new LLM source' })
+  @ApiResponse({ status: 201, description: 'LLM source created successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid request body' })
+  query(@Body() filtersConfig: FiltersConfig) {
+    return this.sourcesLLMService.queryUsingFiltersConfig(filtersConfig);
   }
 
   @Put(':id')

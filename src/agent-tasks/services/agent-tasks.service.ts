@@ -11,7 +11,7 @@ import { NotionService, NotionWritesService, renderPageContentToMarkdown } from 
 import { buildInitialConversation, ChatRole, AgentCardService, IAgentCard, ChatMessage } from '@dataclouder/conversation-card-nestjs';
 // local
 import { AgentTaskEntity, AgentTaskDocument } from '../schemas/agent-task.schema';
-import { AgentTaskType, IAgentJob, IAgentTask, ISourceTask } from '../models/classes';
+import { AgentTaskType, IAgentJob, IAgentTask, ISourceTask, OutputTaks } from '../models/classes';
 import { AgentJobService } from './agent-job.service';
 import { SourcesLLMService } from './agent-sources.service';
 import { AppException } from 'src/common/app-exception';
@@ -54,7 +54,6 @@ export class AgentTasksService {
       const { assets, title } = agentCard;
       createAgentTaskDto.agentCard = { id: createAgentTaskDto.agentCard.id, assets, title, name: agentCard?.characterCard?.data?.name };
     }
-
     if (id) {
       return this.update(id, createAgentTaskDto);
     } else {
@@ -76,8 +75,8 @@ export class AgentTasksService {
   async callPythonAgent(chatMessages: ChatMessage[], task: IAgentTask): Promise<{ content: string; role: string; metadata: any }> {
     const request = {
       messages: chatMessages,
-      modelName: task.modelName,
-      provider: task.provider,
+      modelName: task.model.modelName,
+      provider: task.model.provider,
       type: task.taskType,
       additionalProp1: {},
     };
@@ -116,7 +115,9 @@ export class AgentTasksService {
     if (!task) {
       throw new Error('Task not found');
     }
+
     let infoFromSources = null;
+
     if (task?.sources?.length > 0) {
       const sources = await this.sourcesLLMService.findManyByIds(task.sources.map(source => source.id));
       for (const source of sources) {
@@ -129,75 +130,33 @@ export class AgentTasksService {
     const results = [];
 
     if (task.agentCards.length == 0) {
-      const chatMessages = [];
-      if (infoFromSources) {
-        chatMessages.push({
-          role: ChatRole.System,
-          content: 'This is the information from the sources: \n\n' + infoFromSources,
-        });
-      }
-      chatMessages.push({ role: ChatRole.User, content: task.description });
+      return await this.executeTaskNoAgent(task, infoFromSources);
+    } else if (task.taskType === AgentTaskType.CREATE_CONTENT) {
+      return await this.executeContentTask(task, infoFromSources);
+    } else if (task.taskType === AgentTaskType.REVIEW_TASK) {
+      return await this.executeReviewTask(task, infoFromSources);
+    }
+  }
 
-      const response = await this.callPythonAgent(chatMessages, task);
+  private async executeReviewTask(task: IAgentTask, infoFromSources: string) {
+    const results = [];
+    console.log('-> Reviewing task: ', task.name);
+    const jobs = (await this.agentJobService.findByTaskAttachedIdToday(task.taskAttached.id)) as IAgentJob[];
+    for (const finishedJob of jobs) {
+      console.log(`-> Evaluando Job: ${finishedJob.task.name} - ${finishedJob.agentCard.title} `);
 
-      const job: IAgentJob = {
-        task: { id: task.id, name: task.name },
-        messages: chatMessages,
-        response: response,
-        sources: task.sources,
-        infoFromSources: infoFromSources,
-      };
-
-      const jobCreated = await this.agentJobService.create(job);
-
-      if (task.taskType === AgentTaskType.POST_NOTION) {
-        const notionResponse = await this.notionWritesService.createPageWithContentIntoDatabase({
-          databaseId: task.notionOutput.id,
-          title: task.name,
-          contentMarkdown: response.content,
-          iconUrl: task?.agentCard?.assets?.image?.url || '',
-          properties: {
-            Name: { title: [{ text: { content: task.name } }] },
-            Date: { date: { start: new Date().toISOString() } },
-            Agent: { rich_text: [{ text: { content: task?.agentCard?.title ?? 'AI' } }] },
-          },
-        });
-      }
-
-      return { job: jobCreated, response: response };
-    } else {
       for (const agentCardMinimal of task.agentCards) {
+        console.log(`-> Agente encargado: ${agentCardMinimal.name} - ${agentCardMinimal.title}`);
         const agentCard: IAgentCard = await this.conversationAiService.getConversationById(agentCardMinimal.id);
         const chatMessages = buildInitialConversation(agentCard);
-
-        if (infoFromSources) {
-          chatMessages.push({
-            role: ChatRole.System,
-            content: 'This is the information from the sources: \n\n' + infoFromSources,
-          });
-        }
+        const textToReview = finishedJob.response.content;
+        infoFromSources = textToReview;
+        chatMessages.push({ role: ChatRole.System, content: `This is the text to review: ${textToReview}` });
 
         chatMessages.push({ role: ChatRole.User, content: task.description });
 
-        if (agentCard.characterCard?.data?.post_history_instructions) {
-          chatMessages.push({ role: ChatRole.System, content: agentCard.characterCard.data.post_history_instructions });
-        }
-
         const response = await this.callPythonAgent(chatMessages, task);
-
-        const notionResponse = await this.notionWritesService.createPageWithContentIntoDatabase({
-          databaseId: task.notionOutput.id,
-          title: task.name,
-          contentMarkdown: response.content,
-          iconUrl: agentCardMinimal?.assets?.image?.url || '',
-          properties: {
-            Name: { title: [{ text: { content: task.name } }] },
-            Date: { date: { start: new Date().toISOString() } },
-            Agent: { rich_text: [{ text: { content: agentCardMinimal?.title ?? 'AI' } }] },
-          },
-        });
-        console.log('page added: ', notionResponse?.page?.id);
-
+        console.log('-> Response: ', response.content.slice(0, 100) + '...');
         const job: IAgentJob = {
           task: { id: task.id, name: task.name },
           agentCard: { id: agentCard.id, assets: agentCard.assets, title: agentCard.title, name: agentCard?.characterCard?.data?.name },
@@ -206,14 +165,105 @@ export class AgentTasksService {
           sources: task.sources,
           infoFromSources: infoFromSources,
         };
-
         const jobCreated = await this.agentJobService.create(job);
-        console.log('finished job for: ', jobCreated?.task?.name);
+        console.log(`-> Job created: ${jobCreated.task.name} by ${jobCreated.agentCard.title}`);
+
+        const notionResponse = await this.postInNotion(task, agentCard, response.content);
+
         results.push(jobCreated);
       }
     }
+    console.log('-> Jobs found: ', jobs.length);
+    return jobs;
+  }
+
+  private async executeContentTask(task: IAgentTask, infoFromSources: string) {
+    let results = [];
+
+    for (const agentCardMinimal of task.agentCards) {
+      const agentCard: IAgentCard = await this.conversationAiService.getConversationById(agentCardMinimal.id);
+      const chatMessages = buildInitialConversation(agentCard);
+
+      if (infoFromSources) {
+        chatMessages.push({
+          role: ChatRole.System,
+          content: 'This is the information from the sources: \n\n' + infoFromSources,
+        });
+      }
+
+      chatMessages.push({ role: ChatRole.User, content: task.description });
+
+      if (agentCard.characterCard?.data?.post_history_instructions) {
+        chatMessages.push({ role: ChatRole.System, content: agentCard.characterCard.data.post_history_instructions });
+      }
+
+      const response = await this.callPythonAgent(chatMessages, task);
+
+      const notionResponse = await this.postInNotion(task, agentCard, response.content);
+      console.log('page added: ', notionResponse?.page?.id);
+
+      const job: IAgentJob = {
+        task: { id: task.id, name: task.name },
+        agentCard: { id: agentCard.id, assets: agentCard.assets, title: agentCard.title, name: agentCard?.characterCard?.data?.name },
+        messages: chatMessages,
+        response: response,
+        sources: task.sources,
+        infoFromSources: infoFromSources,
+      };
+
+      const jobCreated = await this.agentJobService.create(job);
+      console.log('finished job for: ', jobCreated?.task?.name);
+      results.push(jobCreated);
+    }
     return results;
   }
+
+  private async executeTaskNoAgent(task: IAgentTask, infoFromSources: string) {
+    const chatMessages = [];
+    if (infoFromSources) {
+      chatMessages.push({
+        role: ChatRole.System,
+        content: 'This is the information from the sources: \n\n' + infoFromSources,
+      });
+    }
+    chatMessages.push({ role: ChatRole.User, content: task.description });
+
+    const response = await this.callPythonAgent(chatMessages, task);
+
+    const job: IAgentJob = {
+      task: { id: task.id, name: task.name },
+      messages: chatMessages,
+      response: response,
+      sources: task.sources,
+      infoFromSources: infoFromSources,
+    };
+
+    const jobCreated = await this.agentJobService.create(job);
+    // TODO: ya no tengo que revisar la intención más bien la salida que sea notion.
+
+    if (task.output.type === OutputTaks.NOTION_PAGE) {
+      this.postInNotion(task, { title: 'No Agent' } as any, response.content);
+    }
+    return { job: jobCreated, response: response };
+  }
+
+  private async postInNotion(task: IAgentTask, agentCard: IAgentCard, mdContent: string) {
+    const notionResponse = await this.notionWritesService.createPageWithContentIntoDatabase({
+      databaseId: task.output.id,
+      title: task.name,
+      contentMarkdown: mdContent,
+      iconUrl: agentCard.assets.image.url,
+      properties: {
+        Name: { title: [{ text: { content: task.name } }] },
+        Date: { date: { start: new Date().toISOString() } },
+        Agent: { rich_text: [{ text: { content: agentCard?.title ?? 'AI' } }] },
+      },
+    });
+
+    return notionResponse;
+  }
+
+  private async reviewCards() {}
 
   private async createNotionAgentPageAndAddContent(task: IAgentTask, agentCard: IAgentCard, mdContent: string) {
     const results = [];
@@ -225,7 +275,7 @@ export class AgentTasksService {
     };
 
     const notionPage = await this.notionWritesService.createDatabaseEntry({
-      databaseId: task.notionOutput.id,
+      databaseId: task.output.id,
       title: task.name,
       children: [],
       iconUrl: agentCard.assets.image.url,

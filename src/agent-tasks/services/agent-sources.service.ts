@@ -5,12 +5,14 @@ import { SourceLLMDocument, SourceLLMEntity } from '../schemas/agent-sources.sch
 import { IAgentSource } from '../models/classes';
 
 import { YouTubeService } from '../../youtube/functions';
+import { FiltersConfig, IQueryResponse, MongoService } from '@dataclouder/dc-mongo';
 
 @Injectable()
 export class SourcesLLMService {
   constructor(
     @InjectModel(SourceLLMEntity.name)
-    private sourceLLMModel: Model<SourceLLMDocument>
+    private sourceLLMModel: Model<SourceLLMDocument>,
+    private mongoService: MongoService
   ) {}
 
   async findAll(): Promise<SourceLLMEntity[]> {
@@ -46,5 +48,9 @@ export class SourcesLLMService {
     const youtubeService = new YouTubeService(process.env.YOUTUBE_API_KEY);
     const transcript = await youtubeService.getVideoTranscript(url);
     return transcript;
+  }
+
+  async queryUsingFiltersConfig(filterConfig: FiltersConfig): Promise<IQueryResponse> {
+    return await this.mongoService.queryUsingFiltersConfig(filterConfig, this.sourceLLMModel);
   }
 }

@@ -1,7 +1,8 @@
-import { IAgentCard } from '@dataclouder/conversation-card-nestjs';
+import { IAgentCard, IAIModel } from '@dataclouder/conversation-card-nestjs';
 
 export enum AgentTaskType {
-  POST_NOTION = 'post_notion',
+  REVIEW_TASK = 'review_task',
+  CREATE_CONTENT = 'create_content',
 }
 
 export interface ISourceTask {
@@ -22,13 +23,9 @@ export interface IAgentTask {
   status: string;
   taskType: AgentTaskType;
   sources: ISourceTask[];
-  provider: string;
-  modelName: string;
-  notionOutput: {
-    id: string;
-    name: string;
-    type: string;
-  };
+  model: IAIModel;
+  output: IAgentTaskOutput;
+  taskAttached: Partial<IAgentTask>;
 }
 
 // Tiene una relación con el agente y la tarea. parcial asi muestro graficamente que pasa.
@@ -59,4 +56,15 @@ export interface IAgentSource {
   content: string;
   contentEnhancedAI?: string;
   img: string;
+  assets?: any;
+}
+
+export interface IAgentTaskOutput {
+  id: string;
+  name: string;
+  type: string;
+}
+
+export enum OutputTaks {
+  NOTION_PAGE = 'notion_page',
 }

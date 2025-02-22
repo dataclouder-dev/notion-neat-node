@@ -49,4 +49,6 @@ update-dc:
 
 update-all:
 	ncu -u
-	
+
+start:
+	npm run start:dev
