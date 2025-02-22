@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { IAgentTask, AgentTaskType, ISourceTask, IAgentCardMinimal } from '../models/classes';
-import { addIdAfterSave } from 'src/mongo-db/utils';
+import { addIdAfterSave } from '@dataclouder/dc-mongo';
 import { IAIModel } from '@dataclouder/conversation-card-nestjs';
 
 export type AgentTaskDocument = AgentTaskEntity & Document;
