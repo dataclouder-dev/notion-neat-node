@@ -1,5 +1,11 @@
 import { IAgentCard, IAIModel } from '@dataclouder/conversation-card-nestjs';
 
+export interface CloudStorageData {
+  bucket?: string;
+  url?: string;
+  path?: string; // path where the file is in the storage
+}
+
 export enum AgentTaskType {
   REVIEW_TASK = 'review_task',
   CREATE_CONTENT = 'create_content',
@@ -45,6 +51,7 @@ export enum SourceType {
   WEBSITE = 'website',
   YOUTUBE = 'youtube',
   NOTION = 'notion',
+  TIKTOK = 'tiktok',
 }
 
 export interface IAgentSource {
@@ -55,8 +62,24 @@ export interface IAgentSource {
   sourceUrl: string;
   content: string;
   contentEnhancedAI?: string;
-  img: string;
-  assets?: any;
+  image: IImageSource;
+  video: IVideoSource;
+  assets?: Record<string, CloudStorageData>;
+}
+
+export interface IImageSource {
+  image: CloudStorageData;
+  description: string;
+  title: string;
+}
+
+export interface IVideoSource {
+  id_platform: string;
+  audio: CloudStorageData;
+  video: CloudStorageData;
+  frames: IImageSource[];
+  transcript: string;
+  description: string;
 }
 
 export interface IAgentTaskOutput {

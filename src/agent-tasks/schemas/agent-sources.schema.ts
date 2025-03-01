@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { IAgentSource, SourceType } from '../models/classes';
-import { addIdAfterSave } from 'src/mongo-db/utils';
+import { addIdAfterSave } from '@dataclouder/dc-mongo';
 
 export type SourceLLMDocument = SourceLLMEntity & Document;
 

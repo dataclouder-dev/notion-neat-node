@@ -20,15 +20,23 @@
     "editor.acceptSuggestionOnEnter": "off"
   },
   "workbench.colorCustomizations": {
-    "activityBar.activeBorder": "#ffaa00",
-    "activityBar.border": "#ffaa00",
-    "activityBarTop.activeBorder": "#ffaa00",
-    "activityBarTop.foreground": "#ffaa00",
-    "activityBar.activeFocusBorder": "#ffaa00",
-    "activityBarTop.inactiveForeground": "#ffaa00",
-    "activityBarTop.dropBorder": "#ffaa00",
-    "tab.activeBorderTop": "#ffaa00"
+    "activityBar.activeBorder": "#ffe600",
+    "activityBar.border": "#ffe600",
+    "activityBarTop.activeBorder": "#ffe600",
+    "activityBarTop.foreground": "#ffe600",
+    "activityBar.activeFocusBorder": "#ffe600",
+    "activityBarTop.inactiveForeground": "#ffe600",
+    "activityBarTop.dropBorder": "#ffe600",
+    "tab.activeBorderTop": "#ffe600",
+    "tab.border": "#ffe600",
+    "editorGroupHeader.border": "#ffe600",
+    "scrollbarSlider.background": "#ffe60040",
+    "scrollbarSlider.activeBackground": "#ffe600cc",
+    "scrollbar.shadow": "#ffe6006e"
   },
+  "editor.scrollbar.verticalScrollbarSize": 7,
+  "editor.scrollbar.horizontalScrollbarSize": 7,
+  
   "angular-schematics.schematicsDefaultOptions": {
     "angular-*": {
       "externalTemplate": true
