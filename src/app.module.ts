@@ -14,6 +14,7 @@ import { AgentTasksModule } from './agent-tasks/agent-tasks.module';
 
 import { NotionModule } from '@dataclouder/notion';
 import { DCMongoDBModule } from '@dataclouder/dc-mongo';
+import { VideoGeneratorModule } from './video-generator/videoGenerator.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ load: [envVariables], isGlobal: true }),
@@ -31,6 +32,7 @@ import { DCMongoDBModule } from '@dataclouder/dc-mongo';
     ConversationCardsModule,
     NotionAgentsModule,
     AgentTasksModule,
+    VideoGeneratorModule,
   ],
   controllers: [AppController],
 })

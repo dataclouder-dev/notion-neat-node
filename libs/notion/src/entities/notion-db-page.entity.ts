@@ -1,3 +1,4 @@
+import { addIdAfterSave } from '@dataclouder/dc-mongo';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
@@ -22,3 +23,5 @@ export class NotionDBPageEntity {
 }
 
 export const NotionDBPageSchema = SchemaFactory.createForClass(NotionDBPageEntity);
+
+addIdAfterSave(NotionDBPageSchema);

@@ -10,7 +10,7 @@ import { NotionModule } from '@dataclouder/notion';
 import { AgentJobsController } from './controllers/agent-jobs.controller';
 import { AgentJobService } from './services/agent-job.service';
 import { AgentJobEntity, AgentJobSchema } from './schemas/agent-job.schema';
-import { SourceLLMEntity, SourceLLMSchema } from './schemas/agent-sources.schema';
+import { AgentSourceEntity, AgentSourceSchema } from './schemas/agent-sources.schema';
 import { SourcesLLMService } from './services/agent-sources.service';
 import { SourcesLLMController } from './controllers/agent-sources.controller';
 import { DCMongoDBModule } from '@dataclouder/dc-mongo';
@@ -19,7 +19,7 @@ import { DCMongoDBModule } from '@dataclouder/dc-mongo';
   imports: [
     MongooseModule.forFeature([{ name: AgentTaskEntity.name, schema: AgentTaskSchema }]),
     MongooseModule.forFeature([{ name: AgentJobEntity.name, schema: AgentJobSchema }]),
-    MongooseModule.forFeature([{ name: SourceLLMEntity.name, schema: SourceLLMSchema }]),
+    MongooseModule.forFeature([{ name: AgentSourceEntity.name, schema: AgentSourceSchema }]),
     DCMongoDBModule,
     HttpModule,
     ConversationCardsModule,

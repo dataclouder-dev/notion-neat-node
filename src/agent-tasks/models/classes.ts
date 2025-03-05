@@ -65,6 +65,9 @@ export interface IAgentSource {
   image: IImageSource;
   video: IVideoSource;
   assets?: Record<string, CloudStorageData>;
+  status: string;
+  statusDescription: string;
+  relationId: string; // if the source contains more data in another table?
 }
 
 export interface IImageSource {
@@ -73,12 +76,18 @@ export interface IImageSource {
   title: string;
 }
 
+export interface IAudioSource {
+  audio: CloudStorageData;
+  transcription: string;
+  description: string;
+}
+
 export interface IVideoSource {
   id_platform: string;
   audio: CloudStorageData;
   video: CloudStorageData;
   frames: IImageSource[];
-  transcript: string;
+  transcription: any; // Check the type for whisper transcription
   description: string;
 }
 

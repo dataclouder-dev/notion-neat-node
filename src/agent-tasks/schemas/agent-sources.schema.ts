@@ -1,12 +1,27 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
-import { IAgentSource, SourceType } from '../models/classes';
+import mongoose, { Document } from 'mongoose';
+import { CloudStorageData, IAgentSource, IImageSource, IVideoSource, SourceType } from '../models/classes';
 import { addIdAfterSave } from '@dataclouder/dc-mongo';
 
-export type SourceLLMDocument = SourceLLMEntity & Document;
+export type AgentSourceDocument = AgentSourceEntity & Document;
 
-@Schema({ collection: 'sources_llm', timestamps: true })
-export class SourceLLMEntity implements IAgentSource {
+@Schema({ collection: 'agent_sources', timestamps: true })
+export class AgentSourceEntity implements IAgentSource {
+  @Prop({ required: false })
+  status: string;
+
+  @Prop({ required: false })
+  statusDescription: string;
+
+  @Prop({ type: mongoose.Schema.Types.Mixed, required: false })
+  image: IImageSource;
+
+  @Prop({ type: mongoose.Schema.Types.Mixed, required: false })
+  video: IVideoSource;
+
+  @Prop({ type: mongoose.Schema.Types.Mixed, required: false })
+  assets?: Record<string, CloudStorageData>;
+
   @Prop({ required: false })
   id: string;
 
@@ -30,8 +45,11 @@ export class SourceLLMEntity implements IAgentSource {
 
   @Prop({ required: false })
   contentEnhancedAI: string;
+
+  @Prop({ required: false })
+  relationId: string;
 }
 
-export const SourceLLMSchema = SchemaFactory.createForClass(SourceLLMEntity);
+export const AgentSourceSchema = SchemaFactory.createForClass(AgentSourceEntity);
 
-addIdAfterSave(SourceLLMSchema);
+addIdAfterSave(AgentSourceSchema);
